@@ -1,0 +1,4 @@
+>1 { "type": "subscribe", "channel": "candle/0/1h" }
+>2 { "type": "subscribe", "channel": "candle/0/1d" }
+=1 { "type": "subscribed/candle", "channel": "candle:0:1h", "timestamp": 1778500801812, "candles": [{ "t": 1778500800000, "o": 2334.89, "h": 2335.14, "l": 2334.73, "c": 2334.73, "v": 19.8259, "V": 46293.345028, "i": 19694821240 }]}
+=2 { "type": "subscribed/candle", "channel": "candle:0:1d", "timestamp": 1778500801812, "candles": [{ "t": 1778500800000, "o": 2334.89, "h": 2335.14, "l": 2334.73, "c": 2334.73, "v": 19.8259, "V": 46293.345028, "i": 19694821240 }]}

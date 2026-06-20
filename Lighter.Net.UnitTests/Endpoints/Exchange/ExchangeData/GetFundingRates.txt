@@ -1,0 +1,16 @@
+GET
+/api/v1/funding-rates
+false
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "funding_rates": [
+    {
+      "market_id": 0,
+      "exchange": "binance",
+      "symbol": "string",
+      "rate": 0
+    }
+  ]
+}

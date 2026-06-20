@@ -1,0 +1,5 @@
+GET
+/api/v1/exchangeStats
+false
+UriParams: {}
+{"code":200,"total":214,"order_book_stats":[{"symbol":"1000SHIB","last_trade_price":0.004589,"daily_trades_count":1702,"daily_base_token_volume":35640506,"daily_quote_token_volume":165934.413026,"daily_price_change":-2.816603134265142}],"daily_usd_volume":1494392783.805139,"daily_trades_count":1555929}

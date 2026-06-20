@@ -1,0 +1,16 @@
+GET
+/api/v1/announcement
+false
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "announcements": [
+    {
+      "title": "string",
+      "content": "string",
+      "created_at": 0,
+      "expired_at": 0
+    }
+  ]
+}

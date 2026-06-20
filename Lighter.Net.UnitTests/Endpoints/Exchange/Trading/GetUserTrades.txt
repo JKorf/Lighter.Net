@@ -1,0 +1,55 @@
+GET
+/api/v1/trades
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "next_cursor": "string",
+  "trades": [
+    {
+      "trade_id": "145",
+      "tx_hash": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "type": "trade",
+      "market_id": "1",
+      "size": "0.1",
+      "price": "3024.66",
+      "usd_amount": "3024.66",
+      "ask_id": "145",
+      "bid_id": "245",
+      "ask_account_id": "1",
+      "bid_account_id": "3",
+      "is_maker_ask": "true",
+      "block_height": "45434",
+      "timestamp": "1640995200",
+      "taker_fee": "0",
+      "taker_position_size_before": "0",
+      "taker_entry_quote_before": "0",
+      "taker_initial_margin_fraction_before": "0",
+      "taker_position_sign_changed": "true",
+      "maker_fee": "0",
+      "maker_position_size_before": "0",
+      "maker_entry_quote_before": "0",
+      "maker_initial_margin_fraction_before": "0",
+      "maker_position_sign_changed": "true",
+      "transaction_time": "1771943742851429",
+      "bid_account_pnl": "-0.022890",
+      "ask_account_pnl": "1.989696",
+      "ask_client_id": "145",
+      "bid_client_id": "245",
+      "ask_client_id_str": "145",
+      "bid_client_id_str": "245",
+      "ask_id_str": "145",
+      "bid_id_str": "245",
+      "trade_id_str": "145",
+      "integrator_maker_fee": "50",
+      "integrator_maker_fee_collector_index": "156",
+      "integrator_taker_fee": "50",
+      "integrator_taker_fee_collector_index": "156",
+      "taker_allocated_margin_usdc_before": "1100000000000000",
+      "taker_allocated_margin_usdc_after": "150000000000000",
+      "maker_allocated_margin_usdc_before": "210000000000000",
+      "maker_allocated_margin_usdc_after": "250000000000000"
+    }
+  ]
+}

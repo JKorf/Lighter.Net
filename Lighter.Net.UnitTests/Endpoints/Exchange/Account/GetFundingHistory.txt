@@ -1,0 +1,21 @@
+GET
+/api/v1/positionFunding
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "position_fundings": [
+    {
+      "timestamp": "1640995200",
+      "market_id": "1",
+      "funding_id": "1",
+      "change": "1",
+      "discount": "1",
+      "rate": "1",
+      "position_size": "1",
+      "position_side": "long"
+    }
+  ],
+  "next_cursor": "string"
+}

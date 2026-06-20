@@ -1,0 +1,26 @@
+GET
+/api/v1/accountMetadata
+true
+UriParams: {"by": "index","value": "123"}
+{
+  "code": 200,
+  "message": "string",
+  "account_metadatas": [
+    {
+      "account_index": 0,
+      "name": "string",
+      "description": "string",
+      "can_invite": true,
+      "referral_points_percentage": "",
+      "created_at": 0,
+      "can_rfq": true,
+      "can_rfq_market_ids": [
+        "string"
+      ],
+      "metadata": {
+        "color": "string"
+      }
+    }
+  ],
+  "next_cursor": "string"
+}

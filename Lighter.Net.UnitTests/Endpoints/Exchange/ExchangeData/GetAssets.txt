@@ -1,0 +1,28 @@
+GET
+/api/v1/assetDetails
+false
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "asset_details": [
+    {
+      "asset_id": 1,
+      "symbol": "ETH",
+      "l1_decimals": 18,
+      "decimals": 18,
+      "min_transfer_amount": "0.01",
+      "min_withdrawal_amount": "0.01",
+      "margin_mode": "enabled",
+      "index_price": "3024.66",
+      "l1_address": "0x0000000000000000000000000000000000000000",
+      "global_supply_cap": "1000000",
+      "liquidation_fee": "0.01",
+      "liquidation_threshold": "0.8",
+      "loan_to_value": "0.5",
+      "price_decimals": "4",
+      "total_supplied": "100",
+      "user_supply_cap": "1000"
+    }
+  ]
+}

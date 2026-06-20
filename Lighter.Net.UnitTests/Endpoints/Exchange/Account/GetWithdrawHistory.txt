@@ -1,0 +1,20 @@
+GET
+/api/v1/withdraw/history
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "withdraws": [
+    {
+      "id": "1",
+      "amount": "0.1",
+      "timestamp": "1640995200",
+      "status": "failed",
+      "type": "secure",
+      "l1_tx_hash": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "asset_id": 0
+    }
+  ],
+  "cursor": "string"
+}

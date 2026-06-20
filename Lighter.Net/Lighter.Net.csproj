@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Lighter.Net</PackageId>
+    <Authors>JKorf</Authors>
+    <PackageVersion>0.1.0</PackageVersion>
+    <AssemblyVersion>0.1.0</AssemblyVersion>
+    <FileVersion>0.1.0</FileVersion>
+    <Description>A high-performance .NET client library for the Lighter REST and WebSocket APIs, providing strongly typed models, automatic WebSocket reconnection, client-side rate limiting, local order book support, and seamless integration with other CryptoExchange.Net based clients.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>Lighter;Lighter.Net;Lighter Client;Lighter API;CryptoCurrency;CryptoCurrency Exchange;CryptoExchange.Net</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/JKorf/Lighter.Net.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/JKorf/Lighter.Net</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <NeutralLanguage>en</NeutralLanguage>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReleaseNotes>https://github.com/JKorf/Lighter.Net?tab=readme-ov-file#release-notes</PackageReleaseNotes>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+  </PropertyGroup>
+  <PropertyGroup Label="AOT" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <PropertyGroup Label="Deterministic Build" Condition="'$(Configuration)' == 'Release'">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+  <ItemGroup Label="Deterministic Build" Condition="'$(Configuration)' == 'Release'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <DocumentationFile>Lighter.Net.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="Icon\icon.png" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ConfigureAwaitChecker.Analyzer" Version="5.0.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.103">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Secp256k1.Net" Version="2.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\CryptoExchange.Net\CryptoExchange.Net\CryptoExchange.Net.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="libs\lighter-signer-darwin-arm64.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libs\lighter-signer-linux-amd64.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libs\lighter-signer-linux-arm64.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libs\lighter-signer-windows-amd64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

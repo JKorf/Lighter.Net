@@ -1,0 +1,109 @@
+GET
+/api/v1/liquidations
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "liquidations": [
+    {
+      "id": 0,
+      "market_id": 0,
+      "type": "partial",
+      "trade": {
+        "price": "0",
+        "size": "0",
+        "taker_fee": "0",
+        "maker_fee": "0",
+        "transaction_time": 0
+      },
+      "info": {
+        "positions": [
+          {
+            "market_id": "1",
+            "symbol": "ETH",
+            "initial_margin_fraction": "20.00",
+            "open_order_count": "3",
+            "pending_order_count": "3",
+            "position_tied_order_count": "3",
+            "sign": "1",
+            "position": "3.6956",
+            "avg_entry_price": "3024.66",
+            "position_value": "3019.92",
+            "unrealized_pnl": "17.521309",
+            "realized_pnl": "2.000000",
+            "liquidation_price": "3024.66",
+            "total_funding_paid_out": "34.2",
+            "margin_mode": "1",
+            "allocated_margin": "46342",
+            "total_discount": "0"
+          }
+        ],
+        "risk_info_before": {
+          "cross_risk_parameters": {
+            "market_id": 0,
+            "collateral": "0",
+            "total_account_value": "0",
+            "initial_margin_req": "0",
+            "maintenance_margin_req": "0",
+            "close_out_margin_req": "0",
+            "total_account_liquidation_threshold": "0",
+            "usdc_collateral_with_funding": "0",
+            "usdc_portfolio_value": "0"
+          },
+          "isolated_risk_parameters": [
+            {
+              "market_id": 0,
+              "collateral": "0",
+              "total_account_value": "0",
+              "initial_margin_req": "0",
+              "maintenance_margin_req": "0",
+              "close_out_margin_req": "0",
+              "total_account_liquidation_threshold": "0",
+              "usdc_collateral_with_funding": "0",
+              "usdc_portfolio_value": "0"
+            }
+          ]
+        },
+        "risk_info_after": {
+          "cross_risk_parameters": {
+            "market_id": 0,
+            "collateral": "0",
+            "total_account_value": "0",
+            "initial_margin_req": "0",
+            "maintenance_margin_req": "0",
+            "close_out_margin_req": "0",
+            "total_account_liquidation_threshold": "0",
+            "usdc_collateral_with_funding": "0",
+            "usdc_portfolio_value": "0"
+          },
+          "isolated_risk_parameters": [
+            {
+              "market_id": 0,
+              "collateral": "0",
+              "total_account_value": "0",
+              "initial_margin_req": "0",
+              "maintenance_margin_req": "0",
+              "close_out_margin_req": "0",
+              "total_account_liquidation_threshold": "0",
+              "usdc_collateral_with_funding": "0",
+              "usdc_portfolio_value": "0"
+            }
+          ]
+        },
+        "assets": [
+          {
+            "symbol": "USDC",
+            "asset_id": 1,
+            "balance": "1000",
+            "locked_balance": "1000",
+            "margin_balance": "1000",
+            "margin_mode": "enabled"
+          }
+        ]
+      },
+      "executed_at": 0
+    }
+  ],
+  "next_cursor": "string"
+}

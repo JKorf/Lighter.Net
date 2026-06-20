@@ -1,0 +1,19 @@
+> { "type": "subscribe", "channel": "spot_market_stats/0" }
+= 
+{
+   "channel":"spot_market_stats:0",
+   "spot_market_stats":{
+      "symbol":"ETH/USDC",
+      "market_id":2048,
+      "index_price":"2183.030179",
+      "mid_price":"2182.60",
+      "last_trade_price":"2179.81",
+      "daily_base_token_volume":670.444,
+      "daily_quote_token_volume":1511428.664237,
+      "daily_price_low":2166.63,
+      "daily_price_high":2347.78,
+      "daily_price_change":-6.365549828178694
+   },
+   "timestamp":1773860440362,
+   "type":"subscribed/spot_market_stats"
+}

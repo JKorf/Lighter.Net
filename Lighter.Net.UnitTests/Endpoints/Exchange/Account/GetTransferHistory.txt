@@ -1,0 +1,26 @@
+GET
+/api/v1/transfer/history
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "transfers": [
+    {
+      "id": "1",
+      "amount": "0.1",
+      "timestamp": "1640995200",
+      "type": "L2TransferInflow",
+      "from_l1_address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "to_l1_address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "from_account_index": "1",
+      "to_account_index": "1",
+      "tx_hash": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "asset_id": 0,
+      "fee": "1",
+      "from_route": "spot",
+      "to_route": "spot"
+    }
+  ],
+  "cursor": "string"
+}

@@ -1,0 +1,127 @@
+GET
+/api/v1/account
+false
+UriParams: {"by": "index","value": "123"}
+{
+  "code": 200,
+  "message": "string",
+  "total": "1",
+  "accounts": [
+    {
+      "account_type": "1",
+      "account_trading_mode": "1",
+      "index": "1",
+      "l1_address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "cancel_all_time": "1640995200",
+      "total_order_count": "100",
+      "total_isolated_order_count": "100",
+      "pending_order_count": "100",
+      "available_balance": "19995",
+      "status": "1",
+      "collateral": "46342",
+      "account_index": 0,
+      "name": "string",
+      "description": "string",
+      "can_invite": true,
+      "referral_points_percentage": "0",
+      "positions": [
+        {
+          "market_id": "1",
+          "symbol": "ETH",
+          "initial_margin_fraction": "20.00",
+          "open_order_count": "3",
+          "pending_order_count": "3",
+          "position_tied_order_count": "3",
+          "sign": "1",
+          "position": "3.6956",
+          "avg_entry_price": "3024.66",
+          "position_value": "3019.92",
+          "unrealized_pnl": "17.521309",
+          "realized_pnl": "2.000000",
+          "liquidation_price": "3024.66",
+          "total_funding_paid_out": "34.2",
+          "margin_mode": "1",
+          "allocated_margin": "46342",
+          "total_discount": "0"
+        }
+      ],
+      "assets": [
+        {
+          "symbol": "USDC",
+          "asset_id": 1,
+          "balance": "1000",
+          "locked_balance": "1000",
+          "margin_balance": "1000",
+          "margin_mode": "enabled"
+        }
+      ],
+      "total_asset_value": "19995",
+      "cross_asset_value": "19995",
+      "pool_info": {
+        "status": "0",
+        "operator_fee": "100",
+        "min_operator_share_rate": "200",
+        "total_shares": "100000",
+        "operator_shares": "20000",
+        "annual_percentage_yield": "20.5000",
+        "daily_returns": [
+          {
+            "timestamp": "1640995200",
+            "daily_return": "0.0001"
+          }
+        ],
+        "share_prices": [
+          {
+            "timestamp": "1640995200",
+            "share_price": "0.0001"
+          }
+        ],
+        "sharpe_ratio": 0,
+        "strategies": [
+          {
+            "collateral": "0"
+          }
+        ]
+      },
+      "shares": [
+        {
+          "public_pool_index": "1",
+          "shares_amount": "3000",
+          "entry_usdc": "3000",
+          "entry_timestamp": 0,
+          "principal_amount": "0"
+        }
+      ],
+      "created_at": 0,
+      "transaction_time": 0,
+      "pending_unlocks": [
+        {
+          "unlock_timestamp": 0,
+          "asset_index": 0,
+          "amount": "0"
+        }
+      ],
+      "approved_integrators": [
+        {
+          "account_index": "54621",
+          "name": "Integrator1",
+          "max_perps_taker_fee": "10",
+          "max_perps_maker_fee": "1",
+          "max_spot_taker_fee": "10",
+          "max_spot_maker_fee": "1",
+          "approval_expiry": "1640995200"
+        }
+      ],
+      "can_rfq": true,
+      "cross_initial_margin_requirement": "5998.500000",
+      "cross_maintenance_margin_requirement": "2999.250000",
+      "can_rfq_market_ids": [
+        "string"
+      ],
+      "metadata": {
+        "color": "string"
+      }
+    }
+  ],
+  "next_cursor": "string"
+}

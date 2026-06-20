@@ -1,0 +1,31 @@
+GET
+/api/v1/layer1BasicInfo
+false
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "l1_providers": [
+    {
+      "chainId": "1",
+      "networkId": "1",
+      "latestBlockNumber": "45434"
+    }
+  ],
+  "l1_providers_health": "true",
+  "validator_info": [
+    {
+      "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "is_active": "true"
+    }
+  ],
+  "contract_addresses": [
+    {
+      "name": "1",
+      "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    }
+  ],
+  "latest_l1_generic_block": "45434",
+  "latest_l1_governance_block": "45434",
+  "latest_l1_desert_block": "45434"
+}

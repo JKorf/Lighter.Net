@@ -1,0 +1,51 @@
+GET
+/api/v1/accountInactiveOrders
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "next_cursor": "string",
+  "orders": [
+    {
+      "order_index": "1",
+      "client_order_index": "234",
+      "order_id": "1",
+      "client_order_id": "234",
+      "market_index": "1",
+      "owner_account_index": "1",
+      "initial_base_amount": "0.1",
+      "price": "3024.66",
+      "nonce": "722",
+      "remaining_base_amount": "0.1",
+      "is_ask": "true",
+      "base_size": "12354",
+      "base_price": "3024",
+      "filled_base_amount": "0.1",
+      "filled_quote_amount": "0.1",
+      "side": "buy",
+      "type": "limit",
+      "time_in_force": "good-till-time",
+      "reduce_only": "true",
+      "trigger_price": "3024.66",
+      "order_expiry": "1640995200",
+      "status": "open",
+      "trigger_status": "twap",
+      "trigger_time": "1640995200",
+      "parent_order_index": "1",
+      "parent_order_id": "1",
+      "to_trigger_order_id_0": "1",
+      "to_trigger_order_id_1": "1",
+      "to_cancel_order_id_0": "1",
+      "block_height": "45434",
+      "timestamp": "1640995200",
+      "created_at": "1640995200",
+      "updated_at": "1640995200",
+      "transaction_time": 0,
+      "integrator_fee_collector_index": "0",
+      "integrator_maker_fee": "0",
+      "integrator_taker_fee": "0",
+      "order_flags": "1"
+    }
+  ]
+}

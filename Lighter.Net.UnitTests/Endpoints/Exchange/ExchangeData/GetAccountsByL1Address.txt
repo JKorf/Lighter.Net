@@ -1,0 +1,26 @@
+GET
+/api/v1/accountsByL1Address
+false
+UriParams: {"l1_address": "123"}
+{
+  "code": 200,
+  "message": "string",
+  "l1_address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "sub_accounts": [
+    {
+      "code": 0,
+      "account_type": 0,
+      "index": 1,
+      "l1_address": "0x123",
+      "cancel_all_time": 0,
+      "total_order_count": 0,
+      "total_isolated_order_count": 0,
+      "pending_order_count": 0,
+      "available_balance": "",
+      "status": 1,
+      "collateral": "29.995700",
+      "transaction_time": 0,
+      "account_trading_mode": 0
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+POST
+/api/v1/changeAccountTier
+true
+BodyParams: {}
+{
+  "code": 200,
+  "message": "string"
+}

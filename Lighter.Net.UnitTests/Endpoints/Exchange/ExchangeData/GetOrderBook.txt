@@ -1,0 +1,34 @@
+GET
+/api/v1/orderBookOrders
+false
+UriParams: {"market_id": 0}
+{
+  "code": 200,
+  "message": "string",
+  "total_asks": "1",
+  "asks": [
+    {
+      "order_index": "1",
+      "order_id": "1",
+      "owner_account_index": "1",
+      "initial_base_amount": "0.1",
+      "remaining_base_amount": "0.1",
+      "price": "3024.66",
+      "order_expiry": "1640995200",
+      "transaction_time": 0
+    }
+  ],
+  "total_bids": "1",
+  "bids": [
+    {
+      "order_index": "1",
+      "order_id": "1",
+      "owner_account_index": "1",
+      "initial_base_amount": "0.1",
+      "remaining_base_amount": "0.1",
+      "price": "3024.66",
+      "order_expiry": "1640995200",
+      "transaction_time": 0
+    }
+  ]
+}

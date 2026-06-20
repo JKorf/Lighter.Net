@@ -1,0 +1,29 @@
+GET
+/api/v1/pnl
+true
+UriParams: {"resolution": "1m"}
+{
+  "code": 200,
+  "message": "string",
+  "resolution": "15m",
+  "pnl": [
+    {
+      "timestamp": "1640995200",
+      "trade_pnl": "12.0",
+      "inflow": "12.0",
+      "outflow": "12.0",
+      "pool_pnl": "12.0",
+      "pool_inflow": "12.0",
+      "pool_outflow": "12.0",
+      "pool_total_shares": "12.0",
+      "spot_inflow": "12.0",
+      "spot_outflow": "12.0",
+      "staked_lit": "12.0",
+      "staking_inflow": "12.0",
+      "staking_outflow": "12.0",
+      "staking_pnl": "12.0",
+      "trade_spot_pnl": "12.0",
+      "volume": "12.0"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+GET
+/api/v1/orderBooks
+false
+UriParams: {}
+{
+"code":200,
+"order_books":[
+{
+"symbol":"FARTCOIN",
+"market_id":21,
+"market_type":"perp",
+"base_asset_id":0,
+"quote_asset_id":0,
+"status":"active",
+"taker_fee":"0.0000",
+"maker_fee":"0.0000",
+"liquidation_fee":"1.0000",
+"min_base_amount":"20.0",
+"min_quote_amount":"10.000000",
+"order_quote_limit":"281474976.710655",
+"supported_size_decimals":1,
+"supported_price_decimals":5,
+"supported_quote_decimals":6
+}]
+}

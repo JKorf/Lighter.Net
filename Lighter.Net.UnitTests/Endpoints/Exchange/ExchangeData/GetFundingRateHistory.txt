@@ -1,0 +1,17 @@
+GET
+/api/v1/fundings
+false
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "resolution": "1h",
+  "fundings": [
+    {
+      "timestamp": "1640995200",
+      "value": "0.0001",
+      "rate": "0.0001",
+      "direction": "long"
+    }
+  ]
+}

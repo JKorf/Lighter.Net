@@ -1,0 +1,18 @@
+GET
+/api/v1/accountLimits
+true
+UriParams: {}
+{
+  "code": 200,
+  "message": "string",
+  "max_llp_percentage": "25",
+  "user_tier": "std",
+  "can_create_public_pool": "true",
+  "max_llp_amount": "1000000",
+  "current_maker_fee_tick": "0",
+  "current_taker_fee_tick": "0",
+  "effective_lit_stakes": "string",
+  "leased_lit": "string",
+  "user_tier_name": "standard",
+  "user_tier_last_update": 0
+}
