@@ -33,9 +33,9 @@ The library is targeting both `.NET Standard 2.0` and `.NET Standard 2.1` for op
 ## Install the library
 
 ### NuGet 
-[![NuGet version](https://img.shields.io/nuget/v/Lighter.net.svg?style=for-the-badge)](https://www.nuget.org/packages/Lighter.Net)  [![Nuget downloads](https://img.shields.io/nuget/dt/Lighter.Net.svg?style=for-the-badge)](https://www.nuget.org/packages/Lighter.Net)
+[![NuGet version](https://img.shields.io/nuget/v/JKorf.Lighter.net.svg?style=for-the-badge)](https://www.nuget.org/packages/JKorf.Lighter.Net)  [![Nuget downloads](https://img.shields.io/nuget/dt/JKorf.Lighter.Net.svg?style=for-the-badge)](https://www.nuget.org/packages/JKorf.Lighter.Net)
 
-	dotnet add package Lighter.Net
+	dotnet add package JKorf.Lighter.Net
 	
 ### GitHub packages
 Lighter.Net is available on [GitHub packages](https://github.com/JKorf/Lighter.Net/pkgs/nuget/Lighter.Net). You'll need to add `https://nuget.pkg.github.com/JKorf/index.json` as a NuGet package source.

@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup>
-    <PackageId>Lighter.Net</PackageId>
+    <PackageId>JKorf.Lighter.Net</PackageId>
     <Authors>JKorf</Authors>
     <PackageVersion>0.1.0</PackageVersion>
     <AssemblyVersion>0.1.0</AssemblyVersion>
