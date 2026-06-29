@@ -89,6 +89,9 @@ var tickerSubscriptionResult = socketClient.ExchangeApi.ExchangeData.SubscribeTo
 
 For information on the clients, dependency injection, response processing and more see the [documentation](https://cryptoexchange.jkorf.dev/client-libs/getting-started), or have a look at the examples [here](https://github.com/JKorf/Lighter.Net/tree/main/Examples) or [here](https://github.com/JKorf/CryptoExchange.Net/tree/master/Examples).
 
+**NOTE**  
+Lighter.Net uses the Integrator Code mechanism for Lighter, which means that an additional 1bps / 0.01% fee is charged on top of orders placed with the library to fund development. This is entirely optional and can be disabled in the client options by setting `IntegratorFeePercentage` to `0` or `null` in the client options.
+
 ## CryptoExchange.Net
 Lighter.Net is based on the [CryptoExchange.Net](https://github.com/JKorf/CryptoExchange.Net) base library. Other exchange API implementations based on the CryptoExchange.Net base library are available and follow the same logic.
 
