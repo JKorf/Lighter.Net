@@ -40,7 +40,7 @@ namespace Lighter.Net.UnitTests
                 Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress)
             }));
 
-            var result = await CreateClient().ExchangeApi.ExchangeData.GetKlinesAsync("TSTTST", (KlineInterval)123);
+            var result = await client.ExchangeApi.ExchangeData.GetKlinesAsync("TSTTST", (KlineInterval)123);
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error.Code, Is.EqualTo(20001));
