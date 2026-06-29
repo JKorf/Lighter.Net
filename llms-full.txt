@@ -1,0 +1,686 @@
+# Lighter.Net Full LLM Context
+
+> Detailed AI/LLM reference for generating correct C#/.NET code with Lighter.Net. Use this file when `llms.txt` is too brief and the task needs concrete examples, endpoint routing guidance, or anti-hallucination rules.
+
+Lighter.Net is a strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. It is part of the CryptoExchange.Net ecosystem and uses the same result, shared API, logging, rate limiting, and socket patterns as the other JKorf exchange libraries.
+
+Current package version in this repository: 1.0.0.
+NuGet package id: JKorf.Lighter.Net.
+CryptoExchange.Net dependency: 12.0.1.
+Target frameworks: netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
+Native AOT: supported on compatible .NET targets.
+
+Primary documentation:
+- README.md: overview, installation, feature table, release notes, basic examples
+- docs site: https://cryptoexchange.jkorf.dev/Lighter.Net/
+- Lighter API docs: https://apidocs.lighter.xyz/docs/get-started
+- source interfaces: `Lighter.Net/Interfaces/Clients/**`
+- AI examples: `Examples/ai-friendly/`
+- examples: `Examples/`
+
+## Golden Rules For AI Code Generation
+
+- Use `LighterRestClient` for REST and `LighterSocketClient` for WebSocket. Do not generate raw `HttpClient` calls or hand-written request signing.
+- Use `LighterCredentials`, not generic `ApiCredentials`, for authenticated Lighter API setup.
+- Include `using Lighter.Net;` when using `LighterCredentials` or `LighterEnvironment`.
+- Always check `.Success` before reading `.Data`.
+- REST API calls return `HttpResult<T>` or `HttpResult`.
+- `GenerateApiKey()` returns `CallResult<(string PublicKey, string PrivateKey)>`.
+- WebSocket subscriptions return `WebSocketResult<UpdateSubscription>`.
+- WebSocket request/transaction methods return `QueryResult<T>`.
+- Shared non-I/O symbol/cache helpers return `ExchangeCallResult<T>`.
+- Reuse clients. Do not instantiate a REST or socket client per request in production code.
+- Prefer dependency injection for long-running services.
+- Store WebSocket subscriptions and unsubscribe during shutdown.
+- Do not call `.Result` or `.Wait()` on async methods.
+- Do not invent endpoint names. If unsure, inspect `Lighter.Net/Interfaces/Clients/**`.
+- Do not use Binance-style API branches. Lighter.Net has `ExchangeApi`, not `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi`.
+- Do not manually set nonces unless the user explicitly asks. Transaction methods can auto-populate nonce values from credentials.
+- For multi-exchange code, use `CryptoExchange.Net.SharedApis` interfaces from `client.ExchangeApi.SharedClient` and call `.Discover()` before routing optional shared features.
+- If the user asks about the optional integrator fee, explain that it can be disabled by setting `IntegratorFeePercentage` to `0` or `null` in client options.
+
+## Installation
+
+```bash
+dotnet add package JKorf.Lighter.Net
+```
+
+## Required Usings
+
+Typical REST/trading code:
+
+```csharp
+using Lighter.Net;
+using Lighter.Net.Clients;
+using Lighter.Net.Enums;
+using Lighter.Net.Objects.Models;
+```
+
+Shared API code:
+
+```csharp
+using Lighter.Net.Clients;
+using CryptoExchange.Net.SharedApis;
+```
+
+Retry/error helper code may also need:
+
+```csharp
+using CryptoExchange.Net.Objects;
+```
+
+Dependency injection setup:
+
+```csharp
+using Lighter.Net;
+using Microsoft.Extensions.DependencyInjection;
+```
+
+## Client Setup
+
+Public market data does not require credentials:
+
+```csharp
+var client = new LighterRestClient();
+
+var details = await client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync("ETH/USDC");
+if (!details.Success)
+{
+    Console.WriteLine(details.Error);
+    return;
+}
+
+Console.WriteLine(details.Data.SpotSymbols[0].LastPrice);
+```
+
+Private account, order, and transaction endpoints require credentials:
+
+```csharp
+var client = new LighterRestClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials(
+        publicAddress: "PUBLIC_ADDRESS",
+        accountIndex: 123,
+        apiKeyIndex: 5,
+        apiSecret: "API_SECRET");
+});
+```
+
+Socket client with credentials:
+
+```csharp
+var socketClient = new LighterSocketClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+});
+```
+
+Environments:
+
+```csharp
+var live = new LighterRestClient(options => options.Environment = LighterEnvironment.Live);
+
+var custom = new LighterRestClient(options =>
+{
+    options.Environment = LighterEnvironment.CreateCustom(
+        name: "Custom",
+        spotRestAddress: "https://example-rest/",
+        spotSocketStreamsAddress: "wss://example-stream/");
+});
+```
+
+Integrator fee:
+
+```csharp
+var client = new LighterRestClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.IntegratorFeePercentage = 0m; // Disable optional integrator fee
+});
+```
+
+## Dependency Injection
+
+Current DI shape:
+
+```csharp
+services.AddLighter(options =>
+{
+    options.Rest.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.Socket.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+});
+```
+
+Inject:
+
+```csharp
+public class MyService
+{
+    private readonly ILighterRestClient _restClient;
+    private readonly ILighterSocketClient _socketClient;
+
+    public MyService(ILighterRestClient restClient, ILighterSocketClient socketClient)
+    {
+        _restClient = restClient;
+        _socketClient = socketClient;
+    }
+}
+```
+
+Interface namespaces:
+
+```csharp
+using Lighter.Net.Interfaces.Clients;
+```
+
+## Result Handling Pattern
+
+Always branch on `.Success`.
+
+```csharp
+var result = await client.ExchangeApi.ExchangeData.GetOrderBookAsync("ETH", limit: 50);
+if (!result.Success)
+{
+    Console.WriteLine($"Code: {result.Error?.Code}");
+    Console.WriteLine($"Message: {result.Error?.Message}");
+    return;
+}
+
+var bestBid = result.Data.Bids.FirstOrDefault();
+```
+
+For retry logic, only retry transient errors:
+
+```csharp
+async Task<HttpResult<T>> WithRetry<T>(Func<Task<HttpResult<T>>> call, int maxAttempts = 3)
+{
+    HttpResult<T> last = default!;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        last = await call();
+        if (last.Success)
+            return last;
+
+        if (last.Error?.IsTransient != true)
+            return last;
+
+        await Task.Delay(TimeSpan.FromMilliseconds(250 * Math.Pow(2, attempt)));
+    }
+
+    return last;
+}
+```
+
+## Main API Surface
+
+REST:
+
+```text
+LighterRestClient
+  .ExchangeApi
+    .ExchangeData
+    .Account
+    .Trading
+    .SharedClient
+```
+
+WebSocket:
+
+```text
+LighterSocketClient
+  .ExchangeApi
+    .ExchangeData
+    .Account
+    .Trading
+    .SharedClient
+```
+
+Important: Lighter.Net does not expose separate spot/futures client branches. Use spot-style symbols such as `ETH/USDC` for spot and perp-style symbols such as `ETH` for futures/perpetual markets on the same `ExchangeApi` branch.
+
+## Intent To Method Map
+
+Common REST exchange-data tasks:
+
+```text
+Get platform status -> client.ExchangeApi.ExchangeData.GetStatusAsync()
+Get system config -> client.ExchangeApi.ExchangeData.GetSystemConfigAsync()
+Get supported symbols -> client.ExchangeApi.ExchangeData.GetSymbolsAsync(...)
+Get layer 1 info -> client.ExchangeApi.ExchangeData.GetLayer1BasicInfoAsync()
+Get assets -> client.ExchangeApi.ExchangeData.GetAssetsAsync(...)
+Get order book -> client.ExchangeApi.ExchangeData.GetOrderBookAsync(symbol, limit)
+Get recent trades -> client.ExchangeApi.ExchangeData.GetRecentTradesAsync(symbol, limit)
+Get symbol details / ticker data -> client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(symbol)
+Get exchange stats -> client.ExchangeApi.ExchangeData.GetExchangeStatsAsync()
+Get announcements -> client.ExchangeApi.ExchangeData.GetAnnouncementsAsync()
+Get klines -> client.ExchangeApi.ExchangeData.GetKlinesAsync(symbol, interval, ...)
+Get mark-price klines -> client.ExchangeApi.ExchangeData.GetMarkPriceKlinesAsync(symbol, interval, ...)
+Get funding history -> client.ExchangeApi.ExchangeData.GetFundingRateHistoryAsync(symbol, resolution, ...)
+Get current funding rates -> client.ExchangeApi.ExchangeData.GetFundingRatesAsync()
+```
+
+Common REST account tasks:
+
+```text
+Generate API key pair locally -> client.ExchangeApi.Account.GenerateApiKey()
+Get next nonce -> client.ExchangeApi.Account.GetNonceAsync(...)
+Get account by L1 address -> client.ExchangeApi.Account.GetAccountsByL1AddressAsync(...)
+Get accounts -> client.ExchangeApi.Account.GetAccountsAsync(...)
+Get account limits -> client.ExchangeApi.Account.GetAccountLimitsAsync(...)
+Get account metadata -> client.ExchangeApi.Account.GetAccountMetadataAsync(...)
+Get PnL -> client.ExchangeApi.Account.GetPnlAsync(...)
+Set account tier -> client.ExchangeApi.Account.SetAccountTierAsync(...)
+Get liquidations -> client.ExchangeApi.Account.GetLiquidationsAsync(...)
+Get position funding history -> client.ExchangeApi.Account.GetFundingHistoryAsync(...)
+Get deposit history -> client.ExchangeApi.Account.GetDepositHistoryAsync(...)
+Get transfer history -> client.ExchangeApi.Account.GetTransferHistoryAsync(...)
+Get withdrawal history -> client.ExchangeApi.Account.GetWithdrawHistoryAsync(...)
+Get API keys -> client.ExchangeApi.Account.GetApiKeysAsync(...)
+Approve integrator -> client.ExchangeApi.Account.ApproveIntegratorAsync(...)
+Set leverage -> client.ExchangeApi.Account.SetLeverageAsync(symbol, leverage, marginMode)
+Update margin -> client.ExchangeApi.Account.UpdateMarginAsync(symbol, usdcAmount, addOrRemove, nonce)
+```
+
+Common REST trading tasks:
+
+```text
+Place order -> client.ExchangeApi.Trading.PlaceOrderAsync(...)
+Place multiple orders -> client.ExchangeApi.Trading.PlaceMultipleOrdersAsync(...)
+Edit order -> client.ExchangeApi.Trading.EditOrderAsync(...)
+Cancel order -> client.ExchangeApi.Trading.CancelOrderAsync(symbol, orderIndex)
+Cancel all orders -> client.ExchangeApi.Trading.CancelAllOrdersAsync(timeInForce)
+Get open orders -> client.ExchangeApi.Trading.GetOpenOrdersAsync(...)
+Get closed/inactive orders -> client.ExchangeApi.Trading.GetClosedOrdersAsync(...)
+Get user trades -> client.ExchangeApi.Trading.GetUserTradesAsync(...)
+```
+
+Common WebSocket tasks:
+
+```text
+Subscribe public trades -> socketClient.ExchangeApi.ExchangeData.SubscribeToTradeUpdatesAsync(symbol, handler)
+Subscribe order book -> socketClient.ExchangeApi.ExchangeData.SubscribeToOrderBookUpdatesAsync(symbol, handler)
+Subscribe book ticker -> socketClient.ExchangeApi.ExchangeData.SubscribeToBookTickerUpdatesAsync(symbol, handler)
+Subscribe all futures tickers -> socketClient.ExchangeApi.ExchangeData.SubscribeToFuturesTickerUpdatesAsync(handler)
+Subscribe futures ticker -> socketClient.ExchangeApi.ExchangeData.SubscribeToFuturesTickerUpdatesAsync(symbol, handler)
+Subscribe all spot tickers -> socketClient.ExchangeApi.ExchangeData.SubscribeToSpotTickerUpdatesAsync(handler)
+Subscribe spot ticker -> socketClient.ExchangeApi.ExchangeData.SubscribeToSpotTickerUpdatesAsync(symbol, handler)
+Subscribe klines -> socketClient.ExchangeApi.ExchangeData.SubscribeToKlineUpdatesAsync(symbol, interval, handler)
+Subscribe mark-price klines -> socketClient.ExchangeApi.ExchangeData.SubscribeToMarkPriceKlineUpdatesAsync(symbol, interval, handler)
+Subscribe account updates -> socketClient.ExchangeApi.Account.SubscribeToAccountUpdatesAsync(accountIndex, handler)
+Subscribe user stats -> socketClient.ExchangeApi.Account.SubscribeToUserStatsUpdatesAsync(accountIndex, handler)
+Subscribe balance updates -> socketClient.ExchangeApi.Account.SubscribeToBalanceUpdatesAsync(accountIndex, handler)
+Subscribe order updates -> socketClient.ExchangeApi.Trading.SubscribeToOrderUpdatesAsync(accountIndex, handler)
+Subscribe user trade updates -> socketClient.ExchangeApi.Trading.SubscribeToUserTradeUpdatesAsync(accountIndex, handler)
+Subscribe position updates -> socketClient.ExchangeApi.Trading.SubscribeToPositionUpdatesAsync(accountIndex, handler)
+Socket place order -> socketClient.ExchangeApi.Trading.PlaceOrderAsync(...)
+Socket edit order -> socketClient.ExchangeApi.Trading.EditOrderAsync(...)
+Socket cancel order -> socketClient.ExchangeApi.Trading.CancelOrderAsync(...)
+Socket set leverage -> socketClient.ExchangeApi.Account.SetLeverageAsync(...)
+Socket update margin -> socketClient.ExchangeApi.Account.UpdateMarginAsync(...)
+```
+
+## Order Example
+
+```csharp
+using Lighter.Net;
+using Lighter.Net.Clients;
+using Lighter.Net.Enums;
+
+var client = new LighterRestClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+});
+
+var order = await client.ExchangeApi.Trading.PlaceOrderAsync(
+    symbol: "ETH",
+    side: OrderSide.Buy,
+    orderType: OrderType.Limit,
+    quantity: 0.1m,
+    price: 2000m,
+    timeInForce: TimeInForce.GoodTillTime);
+
+if (!order.Success)
+{
+    Console.WriteLine(order.Error);
+    return;
+}
+
+Console.WriteLine(order.Data);
+```
+
+For a reduce-only order:
+
+```csharp
+var close = await client.ExchangeApi.Trading.PlaceOrderAsync(
+    symbol: "ETH",
+    side: OrderSide.Sell,
+    orderType: OrderType.Market,
+    quantity: 0.1m,
+    price: 0m,
+    timeInForce: TimeInForce.ImmediateOrCancel,
+    reduceOnly: true);
+```
+
+## Account And Leverage Example
+
+```csharp
+using Lighter.Net;
+using Lighter.Net.Clients;
+using Lighter.Net.Enums;
+
+var client = new LighterRestClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+});
+
+var leverage = await client.ExchangeApi.Account.SetLeverageAsync(
+    symbol: "ETH",
+    leverage: 5,
+    marginMode: MarginMode.CrossMargin);
+
+if (!leverage.Success)
+{
+    Console.WriteLine(leverage.Error);
+    return;
+}
+
+var accounts = await client.ExchangeApi.Account.GetAccountsAsync();
+if (!accounts.Success)
+{
+    Console.WriteLine(accounts.Error);
+    return;
+}
+```
+
+## WebSocket Subscription Example
+
+```csharp
+using Lighter.Net.Clients;
+
+var socketClient = new LighterSocketClient();
+
+var tickerSub = await socketClient.ExchangeApi.ExchangeData.SubscribeToSpotTickerUpdatesAsync(
+    "ETH/USDC",
+    update => Console.WriteLine(update.Data.Ticker.LastPrice));
+
+if (!tickerSub.Success)
+{
+    Console.WriteLine(tickerSub.Error);
+    return;
+}
+
+Console.ReadLine();
+
+await socketClient.UnsubscribeAsync(tickerSub.Data);
+```
+
+Authenticated user stream:
+
+```csharp
+using Lighter.Net;
+using Lighter.Net.Clients;
+
+var socketClient = new LighterSocketClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+});
+
+var orderSub = await socketClient.ExchangeApi.Trading.SubscribeToOrderUpdatesAsync(
+    accountIndex: null,
+    update => Console.WriteLine(update.Data));
+
+if (!orderSub.Success)
+{
+    Console.WriteLine(orderSub.Error);
+    return;
+}
+
+Console.ReadLine();
+
+await socketClient.UnsubscribeAsync(orderSub.Data);
+```
+
+Multiple subscriptions should all be checked before `.Data` is used. If a later subscription fails, unsubscribe previously-created subscriptions before returning.
+
+## SharedApis Multi-Exchange Pattern
+
+Use CryptoExchange.Net.SharedApis when the user asks for code that can work against Lighter and other exchanges.
+
+```csharp
+using Lighter.Net.Clients;
+using CryptoExchange.Net.SharedApis;
+
+var restClient = new LighterRestClient();
+var shared = restClient.ExchangeApi.SharedClient;
+
+var sharedInfo = shared.Discover();
+var supportedFeatures = sharedInfo.Features
+    .Where(x => x.Supported)
+    .Select(x => x.EndpointName);
+Console.WriteLine($"{sharedInfo.Exchange} {sharedInfo.TypeName}: {string.Join(", ", supportedFeatures)}");
+
+var symbol = new SharedSymbol(TradingMode.Spot, "ETH", "USDC");
+
+var ticker = await shared.GetSpotTickerAsync(new GetTickerRequest(symbol));
+if (!ticker.Success)
+{
+    Console.WriteLine(ticker.Error);
+    return;
+}
+
+Console.WriteLine(ticker.Data.LastPrice);
+```
+
+Shared WebSocket subscriptions return an `UpdateSubscription` in `.Data`. For shared interface variables, unsubscribe through the concrete socket client:
+
+```csharp
+var socketClient = new LighterSocketClient();
+ITickerSocketClient tickerSocket = socketClient.ExchangeApi.SharedClient;
+
+var sub = await tickerSocket.SubscribeToTickerUpdatesAsync(
+    new SubscribeTickerRequest(new SharedSymbol(TradingMode.Spot, "ETH", "USDC")),
+    update => Console.WriteLine(update.Data.LastPrice));
+
+if (!sub.Success)
+{
+    Console.WriteLine(sub.Error);
+    return;
+}
+
+Console.ReadLine();
+
+await socketClient.UnsubscribeAsync(sub.Data);
+```
+
+Do not call `tickerSocket.UnsubscribeAsync(...)` on `ITickerSocketClient`; that shared interface does not expose the method.
+
+## Symbol And Market Handling
+
+Use the library's symbol helpers, exchange data, and shared API symbol discovery instead of hard-coding market metadata.
+
+```csharp
+var symbols = await client.ExchangeApi.ExchangeData.GetSymbolsAsync();
+if (!symbols.Success)
+{
+    Console.WriteLine(symbols.Error);
+    return;
+}
+
+foreach (var symbol in symbols.Data)
+    Console.WriteLine(symbol.Symbol);
+```
+
+Common symbol forms:
+
+```text
+Spot symbol -> "ETH/USDC"
+Perp/futures symbol -> "ETH"
+```
+
+When generating shared API code, represent spot as `new SharedSymbol(TradingMode.Spot, "ETH", "USDC")` and futures/perps as the appropriate futures trading mode supported by the shared API request type.
+
+## Error Handling Notes
+
+Lighter.Net returns API/network/rate-limit errors through `.Error` on result objects. It generally does not throw for normal API failures. Exceptions are for misconfiguration, disposal, cancellation, missing credentials on authenticated calls, native signer loading issues, or programming errors.
+
+Important authenticated-call notes:
+
+```text
+Missing credentials -> configure LighterCredentials.
+Wrong account/api key index -> check accountIndex and apiKeyIndex.
+Transaction nonce conflict -> normally let the library auto-set nonce; manually override only when necessary.
+Signer/native library issue -> ensure packaged signer library is copied and compatible with OS/architecture.
+Order validation failure -> check symbol, quantity, price, time-in-force, trigger price, reduce-only flag, and account margin.
+```
+
+## Examples
+
+Use these examples when generating code:
+
+```text
+Examples/ai-friendly/01-quickstart.cs
+  Client setup, public market data, authenticated account calls, safe order skeleton.
+
+Examples/ai-friendly/02-trading.cs
+  Leverage, margin, order placement, order lookup, cancellation, batch order shape.
+
+Examples/ai-friendly/03-websocket.cs
+  Public ticker/trade/kline streams and authenticated user streams, success checks, teardown.
+
+Examples/ai-friendly/04-multi-exchange.cs
+  CryptoExchange.Net.SharedApis REST and socket patterns, capability discovery.
+
+Examples/ai-friendly/05-error-handling.cs
+  HttpResult, WebSocketResult, QueryResult, ExchangeCallResult patterns, transient retry, Lighter error examples.
+
+Examples/Lighter.Examples.Console/Program.cs
+  Basic REST and socket usage.
+
+Examples/Lighter.Examples.OrderBook/Program.cs
+  Local order book setup and update handling.
+
+Examples/Lighter.Examples.Tracker/Program.cs
+  User spot/futures data tracker setup.
+
+Examples/Lighter.Examples.Api/Program.cs
+  ASP.NET API integration pattern.
+```
+
+## Anti-Hallucination Checklist
+
+Before finalizing generated code:
+
+- Does it compile with package `JKorf.Lighter.Net`?
+- Does it include `using Lighter.Net;` when using credentials or environments?
+- Does every REST/socket result check `.Success` before `.Data`?
+- Does it use `ExchangeApi`, not `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi`?
+- Does it avoid raw Lighter URLs and manual signing?
+- Does it avoid legacy or non-existent `LighterClient`?
+- Does it avoid manual nonce values unless requested?
+- Does it avoid `.Result` and `.Wait()`?
+- Are WebSocket subscriptions unsubscribed on shutdown?
+- For shared socket interfaces, does it keep the concrete socket client for `UnsubscribeAsync(sub.Data)`?
+- For authenticated examples, does it use `LighterCredentials(publicAddress, accountIndex, apiKeyIndex, apiSecret)`?
+- If integrator-fee behavior matters, does it state or configure `IntegratorFeePercentage` explicitly?
+
+## Source Of Truth For Method Names
+
+When unsure, inspect these files instead of guessing:
+
+```text
+Lighter.Net/Interfaces/Clients/ILighterRestClient.cs
+Lighter.Net/Interfaces/Clients/ILighterSocketClient.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterRestClientExchangeApi.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterRestClientExchangeApiExchangeData.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterRestClientExchangeApiAccount.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterRestClientExchangeApiTrading.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterRestClientExchangeApiShared.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterSocketClientExchangeApi.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterSocketClientExchangeApiExchangeData.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterSocketClientExchangeApiAccount.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterSocketClientExchangeApiTrading.cs
+Lighter.Net/Interfaces/Clients/ExchangeApi/ILighterSocketClientExchangeApiShared.cs
+```
+
+Prefer the interface files over memory when generating endpoint names, parameters, callback names, and return types.
+
+## Common Wrong Patterns To Avoid
+
+Wrong:
+
+```csharp
+var client = new LighterClient();
+```
+
+Use:
+
+```csharp
+var client = new LighterRestClient();
+```
+
+Wrong:
+
+```csharp
+options.ApiCredentials = new ApiCredentials("key", "secret");
+```
+
+Use:
+
+```csharp
+options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+```
+
+Wrong:
+
+```csharp
+var result = await client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync("ETH/USDC");
+Console.WriteLine(result.Data.SpotSymbols[0].LastPrice);
+```
+
+Use:
+
+```csharp
+var result = await client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync("ETH/USDC");
+if (!result.Success)
+{
+    Console.WriteLine(result.Error);
+    return;
+}
+Console.WriteLine(result.Data.SpotSymbols[0].LastPrice);
+```
+
+Wrong:
+
+```csharp
+await sharedTickerSocket.UnsubscribeAsync(sub.Data);
+```
+
+Use:
+
+```csharp
+await socketClient.UnsubscribeAsync(sub.Data);
+```
+
+Wrong:
+
+```csharp
+restClient.SpotApi.ExchangeData.GetTickerAsync("ETHUSDC");
+```
+
+Use:
+
+```csharp
+restClient.ExchangeApi.ExchangeData.GetSymbolDetailsAsync("ETH/USDC");
+```
+
+Wrong:
+
+```csharp
+restClient.FuturesApi.Trading.PlaceOrderAsync(...);
+```
+
+Use:
+
+```csharp
+restClient.ExchangeApi.Trading.PlaceOrderAsync(...);
+```
