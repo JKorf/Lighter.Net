@@ -13,12 +13,12 @@ namespace Lighter.Net.Enums
         /// <summary>
         /// ["<c>0</c>"] Buy
         /// </summary>
-        [Map("0")]
+        [Map("0", "buy")]
         Buy = 0,
         /// <summary>
         /// ["<c>1</c>"] Sell
         /// </summary>
-        [Map("1")]
+        [Map("1", "sell")]
         Sell = 1
     }
 }
