@@ -9,6 +9,6 @@ namespace Lighter.Net.Objects.Internal
         [JsonPropertyName("channel")]
         public string Channel { get; set; } = string.Empty;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonPropertyName("auth")]
-        public string? Auth { get; set; } = string.Empty;
+        public string? Auth { get; set; }
     }
 }
