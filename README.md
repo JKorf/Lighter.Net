@@ -92,6 +92,20 @@ For information on the clients, dependency injection, response processing and mo
 **NOTE**  
 Lighter.Net uses the Integrator Code mechanism for Lighter, which means that an additional 1bps / 0.01% fee is charged on top of orders placed with the library to fund development. This is entirely optional and can be disabled in the client options by setting `IntegratorFeePercentage` to `0` or `null` in the client options.
 
+## AI / LLM documentation
+
+Lighter.Net includes AI-oriented documentation and examples for code generation tools:
+
+|File|Purpose|
+|--|--|
+|[`AGENTS.md`](AGENTS.md)|Assistant skill with core Lighter.Net patterns, pitfalls, and examples|
+|[`llms.txt`](llms.txt)|Short LLM index with links to docs, examples, and critical usage rules|
+|[`llms-full.txt`](llms-full.txt)|Detailed LLM context with endpoint routing, code patterns, and anti-hallucination checks|
+|[`docs/ai-api-map.md`](docs/ai-api-map.md)|Table-style intent-to-method map|
+|[`Examples/ai-friendly`](Examples/ai-friendly)|Compilable single-file examples for common REST, WebSocket, shared API, and error handling workflows|
+
+See [cryptoexchange-skills-hub](https://github.com/JKorf/cryptoexchange-skills-hub) for installable skills.
+
 ## CryptoExchange.Net
 Lighter.Net is based on the [CryptoExchange.Net](https://github.com/JKorf/CryptoExchange.Net) base library. Other exchange API implementations based on the CryptoExchange.Net base library are available and follow the same logic.
 
