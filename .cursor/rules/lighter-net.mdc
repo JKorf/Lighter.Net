@@ -1,0 +1,111 @@
+---
+description: Conventions for using Lighter.Net library when working with the Lighter DEX cryptocurrency exchange in C#/.NET. Apply when generating code that interacts with the Lighter API.
+globs:
+  - "**/*.cs"
+  - "**/*.csproj"
+alwaysApply: false
+---
+
+# Lighter.Net Conventions
+
+This codebase uses **Lighter.Net** for Lighter DEX exchange access. Do not write raw `HttpClient` calls or custom WebSocket clients to Lighter endpoints.
+
+## Client setup pattern
+
+```csharp
+using Lighter.Net;
+using Lighter.Net.Clients;
+
+var restClient = new LighterRestClient(options =>
+{
+    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+});
+```
+
+For public market data only, no credentials needed: `new LighterRestClient()`.
+
+## Result pattern
+
+REST methods return `HttpResult<T>` / `HttpResult`. WebSocket subscriptions return `WebSocketResult<UpdateSubscription>`. WebSocket request/transaction methods return `QueryResult<T>`. Always check `.Success` before reading `.Data`:
+
+```csharp
+var ticker = await restClient.ExchangeApi.ExchangeData.GetSymbolDetailsAsync("ETH/USDC");
+if (!ticker.Success) { /* ticker.Error */ return; }
+var price = ticker.Data.SpotSymbols[0].LastPrice;
+```
+
+## API surface
+
+- `restClient.ExchangeApi.ExchangeData`
+- `restClient.ExchangeApi.Account`
+- `restClient.ExchangeApi.Trading`
+- `restClient.ExchangeApi.SharedClient`
+- `socketClient.ExchangeApi.ExchangeData`
+- `socketClient.ExchangeApi.Account`
+- `socketClient.ExchangeApi.Trading`
+- `socketClient.ExchangeApi.SharedClient`
+
+There is no `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi` branch in Lighter.Net.
+
+## Order placement
+
+Let the library manage nonce values unless the caller specifically needs manual nonce control:
+
+```csharp
+using Lighter.Net.Enums;
+
+var order = await restClient.ExchangeApi.Trading.PlaceOrderAsync(
+    "ETH",
+    OrderSide.Buy,
+    OrderType.Limit,
+    quantity: 0.1m,
+    price: 2000m,
+    timeInForce: TimeInForce.GoodTillTime);
+```
+
+Use symbols such as `"ETH/USDC"` for spot and `"ETH"` for perps.
+
+## WebSocket pattern
+
+```csharp
+var socketClient = new LighterSocketClient();
+var sub = await socketClient.ExchangeApi.ExchangeData.SubscribeToSpotTickerUpdatesAsync(
+    "ETH/USDC",
+    update => { /* update.Data.Ticker.LastPrice */ });
+if (!sub.Success) { /* sub.Error */ return; }
+
+// On shutdown:
+await socketClient.UnsubscribeAsync(sub.Data);
+```
+
+## Multi-exchange code
+
+For exchange-agnostic code, use `CryptoExchange.Net.SharedApis`:
+
+```csharp
+using CryptoExchange.Net.SharedApis;
+
+var shared = new LighterRestClient().ExchangeApi.SharedClient;
+var ticker = await shared.GetSpotTickerAsync(
+    new GetTickerRequest(new SharedSymbol(TradingMode.Spot, "ETH", "USDC")));
+```
+
+## Hard rules
+
+- Never write raw `HttpClient` to Lighter endpoints.
+- Never create `LighterClient`; use `LighterRestClient` or `LighterSocketClient`.
+- Never use `.Result` or `.Wait()`; async-only.
+- Never instantiate clients per request; reuse via DI.
+- Never skip checking result `.Success`.
+- Never use Binance-style `SpotApi` or `FuturesApi`; use `ExchangeApi`.
+- Never use generic `ApiCredentials`; use `LighterCredentials("PUBLIC_ADDRESS", accountIndex, apiKeyIndex, "API_SECRET")`.
+- Always store WebSocket subscriptions and unsubscribe on shutdown.
+- Always use `client.ExchangeApi.SharedClient` for cross-exchange code.
+- Set `IntegratorFeePercentage = 0` or `null` only when the user wants to disable the optional integrator fee.
+
+## Reference
+
+- Skill: `AGENTS.md` in repo root has fuller examples.
+- `llms.txt` and `llms-full.txt` in repo root provide AI context.
+- AI-friendly examples: `Examples/ai-friendly/`.
+- Examples: `Examples/`.

@@ -1,0 +1,48 @@
+# Lighter.Net
+
+> Strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. Part of the CryptoExchange.Net ecosystem, with shared API abstractions for multi-exchange code.
+
+Lighter.Net provides typed access to Lighter public market data, account data, order management, transaction signing, WebSocket subscriptions, automatic WebSocket reconnection, client-side rate limiting, local order book support, account management helpers, and native AOT support. Current version: 1.0.0. Targets netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
+
+REST methods return `HttpResult<T>` / `HttpResult`, local non-I/O helpers return `CallResult<T>`, WebSocket subscriptions return `WebSocketResult<UpdateSubscription>`, WebSocket request/transaction methods return `QueryResult<T>`, and shared non-I/O symbol/cache helpers return `ExchangeCallResult<T>`. For multi-exchange code use `client.ExchangeApi.SharedClient` and call `.Discover()` before routing optional shared features.
+
+## Documentation
+
+- [README](https://github.com/JKorf/Lighter.Net/blob/main/README.md): Overview, installation, supported features, usage examples, release notes
+- [Documentation Site](https://cryptoexchange.jkorf.dev/Lighter.Net/): Client reference and CryptoExchange.Net usage patterns
+- [Lighter API Docs](https://apidocs.lighter.xyz/docs/get-started): Official Lighter REST and WebSocket API reference
+- [Full LLM Context](https://github.com/JKorf/Lighter.Net/blob/main/llms-full.txt): Detailed AI/LLM guide with code patterns, endpoint map, common mistakes, and anti-hallucination rules
+
+## Important Concepts
+
+- Use `LighterRestClient` for REST and `LighterSocketClient` for WebSocket. Do not generate raw `HttpClient` or manual WebSocket calls to Lighter endpoints.
+- The top-level API branch is `ExchangeApi`; there are no `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi` properties.
+- Public data calls do not need credentials. Trading, account, and transaction-signing calls need `LighterCredentials(publicAddress, accountIndex, apiKeyIndex, apiSecret)`.
+- Lighter symbols are strings such as `ETH/USDC` for spot and `ETH` for perps.
+- Transaction methods can auto-set nonces when credentials are configured. Do not manually manage nonces unless the caller explicitly needs that control.
+- The library uses Lighter integrator-code support by default. Set `IntegratorFeePercentage = 0` or `null` in rest/socket options to disable the optional integrator fee.
+
+## Examples
+
+- [AI-friendly examples directory](https://github.com/JKorf/Lighter.Net/tree/main/Examples/ai-friendly): Compact, fully runnable examples optimized for AI assistants and quick onboarding
+- [Quickstart](https://github.com/JKorf/Lighter.Net/blob/main/Examples/ai-friendly/01-quickstart.cs): Client setup, public market data, authenticated account calls, safe order skeleton
+- [Trading](https://github.com/JKorf/Lighter.Net/blob/main/Examples/ai-friendly/02-trading.cs): Leverage, margin, order placement, order lookup, cancellation, batch order shape
+- [WebSocket Streams](https://github.com/JKorf/Lighter.Net/blob/main/Examples/ai-friendly/03-websocket.cs): Public and authenticated subscriptions with proper teardown
+- [Multi-Exchange Pattern](https://github.com/JKorf/Lighter.Net/blob/main/Examples/ai-friendly/04-multi-exchange.cs): CryptoExchange.Net SharedApis capability discovery, shared ticker requests, and shared subscriptions
+- [Error Handling](https://github.com/JKorf/Lighter.Net/blob/main/Examples/ai-friendly/05-error-handling.cs): HttpResult, WebSocketResult, QueryResult, ExchangeCallResult, retry logic, common errors
+- [Examples Repository](https://github.com/JKorf/Lighter.Net/tree/main/Examples): Console, ASP.NET API, order book, and tracker examples
+- [Console Example](https://github.com/JKorf/Lighter.Net/blob/main/Examples/Lighter.Examples.Console/Program.cs): Basic REST and socket usage
+- [Order Book Example](https://github.com/JKorf/Lighter.Net/blob/main/Examples/Lighter.Examples.OrderBook/Program.cs): Local order book usage
+- [Tracker Example](https://github.com/JKorf/Lighter.Net/blob/main/Examples/Lighter.Examples.Tracker/Program.cs): User data tracker usage
+
+## Reference
+
+- [CryptoExchange.Net base library](https://github.com/JKorf/CryptoExchange.Net): Base abstractions used by Lighter.Net and other exchange libraries
+- [CryptoClients.Net](https://github.com/JKorf/CryptoClients.Net): Bundle package providing unified access to many exchange libraries
+- [NuGet Package](https://www.nuget.org/packages/JKorf.Lighter.Net): Latest stable release on NuGet
+
+## Optional
+
+- [Discord Community](https://discord.gg/MSpeEtSY8t): Maintainer-supported Discord for questions and discussion
+- [GitHub Issues](https://github.com/JKorf/Lighter.Net/issues): Bug reports and feature requests
+- [GitHub Sponsors](https://github.com/sponsors/JKorf): Support the maintainer
