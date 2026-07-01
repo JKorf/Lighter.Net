@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lighter.Net.Enums;
+using System;
 using System.Text.Json.Serialization;
 
 namespace Lighter.Net.Objects.Models;
