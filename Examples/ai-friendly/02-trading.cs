@@ -5,7 +5,7 @@
 //
 // Setup:
 //   dotnet add package JKorf.Lighter.Net
-//   Substitute PUBLIC_ADDRESS / ACCOUNT_INDEX / API_KEY_INDEX / API_SECRET
+//   Substitute PRIVATE_KEY / ACCOUNT_INDEX / API_KEY_INDEX / API_SECRET
 
 using Lighter.Net;
 using Lighter.Net.Clients;
@@ -14,7 +14,7 @@ using Lighter.Net.Objects.Models;
 
 var client = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 
     // Lighter.Net uses Lighter's optional integrator-code mechanism by default.
     // Set to 0m or null if you explicitly want to disable it.

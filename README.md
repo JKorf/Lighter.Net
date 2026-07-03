@@ -63,7 +63,7 @@ var lastPrice = tickerResult.Data.SpotSymbols[0].LastPrice;
 *Place order:*
 ```csharp
 var restClient = new LighterRestClient(opts => {
-    opts.ApiCredentials = new LighterCredentials("PUBLICKEY", 123, 5, "APISECRET");
+    opts.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("KEY"), 123, 5, "APISECRET");
 });
 
 // Place Limit order to go 0.1 long for ETH at 2000

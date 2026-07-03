@@ -9,6 +9,10 @@ namespace Lighter.Net.Objects
     public class LighterCredential : CredentialSet
     {
         /// <summary>
+        /// Eth key
+        /// </summary>
+        public EthKey EthKey { get; set; }
+        /// <summary>
         /// Private API key
         /// </summary>
         public string PrivateApiKey { get; set; }
@@ -24,19 +28,20 @@ namespace Lighter.Net.Objects
         /// <summary>
         /// ctor
         /// </summary>
-        /// <param name="publicAddress">Public address</param>
+        /// <param name="ethKey">Ethereum wallet info</param>
         /// <param name="accountIndex">Account index</param>
         /// <param name="apiKeyIndex">API key index</param>
-        /// <param name="apiSecret">API secret</param>
-        public LighterCredential(string publicAddress, long accountIndex, int apiKeyIndex, string apiSecret) : base(publicAddress)
+        /// <param name="privateApiKey">API key secret</param>
+        public LighterCredential(EthKey ethKey, long accountIndex, int apiKeyIndex, string privateApiKey) : base(ethKey.PublicKey)
         {
+            EthKey = ethKey;
             ApiKeyIndex = apiKeyIndex;
             AccountIndex = accountIndex;
-            PrivateApiKey = apiSecret;
+            PrivateApiKey = privateApiKey;
         }
 
         /// <inheritdoc />
-        public override ApiCredentials Copy() => new LighterCredential(Key, AccountIndex, ApiKeyIndex, PrivateApiKey);
+        public override ApiCredentials Copy() => new LighterCredential(EthKey, AccountIndex, ApiKeyIndex, PrivateApiKey);
 
         /// <inheritdoc />
         public override void Validate()

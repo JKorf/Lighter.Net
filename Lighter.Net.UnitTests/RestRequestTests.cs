@@ -20,7 +20,7 @@ namespace Lighter.Net.UnitTests
             var client = new LighterRestClient(opts =>
             {
                 opts.AutoTimestamp = false;
-                opts.ApiCredentials = new LighterCredentials("123", 0, 1, "456");
+                opts.ApiCredentials = new LighterCredentials(EthKey.FromPublicKey("123"), 0, 1, "456");
                 opts.Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress);
             });
             var tester = new RestRequestValidator<LighterRestClient>(client, "Endpoints/Exchange/Account", "https://mainnet.zklighter.elliot.ai", IsAuthenticated);
@@ -64,7 +64,7 @@ namespace Lighter.Net.UnitTests
             var client = new LighterRestClient(opts =>
             {
                 opts.AutoTimestamp = false;
-                opts.ApiCredentials = new LighterCredentials("123", 0, 1, "456");
+                opts.ApiCredentials = new LighterCredentials(EthKey.FromPublicKey("123"), 0, 1, "456");
                 opts.Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress);
             });
             var tester = new RestRequestValidator<LighterRestClient>(client, "Endpoints/Exchange/Trading", "https://mainnet.zklighter.elliot.ai", IsAuthenticated);

@@ -22,15 +22,15 @@ namespace Lighter.Net
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         /// <summary>
-        /// Create new credentials providing credentials in HMAC format
+        /// Create new credentials
         /// </summary>
-        /// <param name="publicAddress">Public address</param>
+        /// <param name="ethKey">Ethereum key/wallet info</param>
         /// <param name="accountIndex">Account index</param>
         /// <param name="apiKeyIndex">API key index</param>
         /// <param name="apiSecret">API secret</param>
-        public LighterCredentials(string publicAddress, long accountIndex, int apiKeyIndex, string apiSecret)
+        public LighterCredentials(EthKey ethKey, long accountIndex, int apiKeyIndex, string apiSecret)
         {
-            Credential = new LighterCredential(publicAddress, accountIndex, apiKeyIndex, apiSecret);
+            Credential = new LighterCredential(ethKey, accountIndex, apiKeyIndex, apiSecret);
         }
 
         /// <summary>
@@ -45,17 +45,17 @@ namespace Lighter.Net
         /// <summary>
         /// Specify the credentials
         /// </summary>
-        /// <param name="publicAddress">Public address</param>
+        /// <param name="ethKey">Ethereum key/wallet info</param>
         /// <param name="accountIndex">Account index</param>
         /// <param name="apiKeyIndex">API key index</param>
         /// <param name="apiSecret">API secret</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public LighterCredentials With(string publicAddress, long accountIndex, int apiKeyIndex, string apiSecret)
+        public LighterCredentials With(EthKey ethKey, long accountIndex, int apiKeyIndex, string apiSecret)
         {
             if (Credential != null) throw new InvalidOperationException("Credentials already set");
 
-            Credential = new LighterCredential(publicAddress, accountIndex, apiKeyIndex, apiSecret);
+            Credential = new LighterCredential(ethKey, accountIndex, apiKeyIndex, apiSecret);
             return this;
         }
 

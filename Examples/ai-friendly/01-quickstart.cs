@@ -41,12 +41,14 @@ if (!orderBook.Success)
 Console.WriteLine($"Order book snapshot received: {orderBook.Data}");
 
 // ---- 2. AUTHENTICATED CLIENT (for account / trading) ----
-// Lighter credentials include the L1 public address, account index, API key index,
+// Lighter credentials include the L1 info, account index, API key index,
 // and API secret. Keep secrets out of source control in real applications.
 var tradingClient = new LighterRestClient(options =>
 {
     options.ApiCredentials = new LighterCredentials(
-        publicAddress: "PUBLIC_ADDRESS",
+        ethKey: EthKey.FromPrivateKey("PRIVATE_KEY"),
+		// OR:
+        // ethKey: EthKey.FromPublicKey("PULBIC_KEY"),
         accountIndex: 123,
         apiKeyIndex: 5,
         apiSecret: "API_SECRET");

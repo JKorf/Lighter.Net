@@ -13,7 +13,7 @@ using Lighter.Net.Clients;
 
 var client = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 // ---- 1. THE BASIC PATTERN ----

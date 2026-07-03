@@ -3,8 +3,11 @@
 	"Lighter": {
 		// API credentials for both REST and Websocket client
 		"ApiCredentials": {
-			"Credentials": {
-				"Key": "PUBLICKEY",
+			"Credential": {
+				"EthKey": {
+					"PublicKey": "PUBLICKEY"
+					"PrivateKey": "PRIVATEKEY"
+				},
 				"PrivateApiKey": "API_SECRET",
 				"ApiKeyIndex": 5,
 				"AccountIndex": 123

@@ -56,7 +56,7 @@ if (!klineSub.Success)
 // ---- 2. AUTHENTICATED SOCKET CLIENT - for user data ----
 var authSocket = new LighterSocketClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 var accountSub = await authSocket.ExchangeApi.Account.SubscribeToAccountUpdatesAsync(

@@ -1,10 +1,11 @@
-using CryptoExchange.Net.Converters.SystemTextJson;
+﻿using CryptoExchange.Net.Converters.SystemTextJson;
 using CryptoExchange.Net.Objects;
 using Lighter.Net.Enums;
 using Lighter.Net.Interfaces.Clients.ExchangeApi;
 using Lighter.Net.Objects.Models;
 using System;
 using System.Net.Http;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -323,7 +324,6 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Approve Integrator
-
         /// <inheritdoc />
         public async Task<HttpResult<LighterTransactionResult>> ApproveIntegratorAsync(
             long integratorAccountIndex,
@@ -338,19 +338,29 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
 
-            var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignApproveIntegrator(
-                integratorAccountIndex,
-                integratorTakerFee,
-                integratorMakerFee,
-                DateTimeConverter.ConvertToMilliseconds(expireTime).Value,
-                0x1,
-                nonce.Value,
-                _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,
-                _baseClient.ApiCredentials!.Credential!.AccountIndex);
+            var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!)
+                .SignApproveIntegrator(
+                    integratorAccountIndex,
+                    integratorTakerFee,
+                    integratorMakerFee,
+                    DateTimeConverter.ConvertToMilliseconds(expireTime).Value,
+                    0x1,
+                    nonce.Value, 
+                    _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,
+                    _baseClient.ApiCredentials!.Credential!.AccountIndex);
+
+            var txInfo = signedTx.TxInfo;
+            if (_baseClient.ApiCredentials.Credential.EthKey.PrivateKey != null)
+            {
+                var result = _baseClient.AuthenticationProvider!.CreateL1Signature(signedTx.MessageToSign!);
+                var txLoaded = JsonNode.Parse(signedTx.TxInfo);
+                txLoaded!.AsObject()["L1Sig"] = result;
+                txInfo = txLoaded.ToJsonString(LighterExchange._serializerContext);
+            }
 
             var body = new Parameters(LighterExchange._parameterSerializationSettings);
             body.Add("tx_type", signedTx.TxType);
-            body.Add("tx_info", signedTx.TxInfo);
+            body.Add("tx_info", txInfo);
             var request = _definitions.GetOrCreate(HttpMethod.Post, _baseClient.BaseAddress, "/api/v1/sendTx", LighterExchange.RateLimiter.LighterRest, 6, false);
             return await _baseClient.SendAsync<LighterTransactionResult>(request, body, ct, skipCheck: true).ConfigureAwait(false);
         }
