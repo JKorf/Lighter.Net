@@ -477,34 +477,46 @@ namespace Lighter.Net.Utils
 
         private static string GetDefaultLibraryPath()
         {
-            var baseDir = Path.Combine(AppContext.BaseDirectory, "libs");
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) &&
-                RuntimeInformation.OSArchitecture == Architecture.Arm64)
+            string rid;
+            string fileName;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && RuntimeInformation.OSArchitecture == Architecture.Arm64)
             {
-                return Path.Combine(baseDir, "lighter-signer-darwin-arm64.dylib");
+                rid = "osx-arm64";
+                fileName = "liblighter_signer.dylib";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.X64)
+            {
+                rid = "linux-x64";
+                fileName = "liblighter_signer.so";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.Arm64)
+            {
+                rid = "linux-arm64";
+                fileName = "liblighter_signer.so";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64)
+            {
+                rid = "win-x64";
+                fileName = "lighter_signer.dll";
+            }
+            else
+            {
+                throw new PlatformNotSupportedException(
+                    $"Unsupported platform/architecture: {RuntimeInformation.OSDescription}/{RuntimeInformation.OSArchitecture}. " +
+                    "Supported: Linux(x64, arm64), macOS(arm64), Windows(x64).");
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-                RuntimeInformation.OSArchitecture == Architecture.X64)
-            {
-                return Path.Combine(baseDir, "lighter-signer-linux-amd64.so");
-            }
+            var ridSpecificPath = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", fileName);
+            if (File.Exists(ridSpecificPath))
+                return ridSpecificPath;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-                RuntimeInformation.OSArchitecture == Architecture.Arm64)
-            {
-                return Path.Combine(baseDir, "lighter-signer-linux-arm64.so");
-            }
+            // Fallback for framework-dependent Publishes without set RuntimeIdentifier, 
+            var baseDirPath = Path.Combine(AppContext.BaseDirectory, fileName);
+            if (File.Exists(baseDirPath))
+                return baseDirPath;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
-                RuntimeInformation.OSArchitecture == Architecture.X64)
-            {
-                return Path.Combine(baseDir, "lighter-signer-windows-amd64.dll");
-            }
-
-            throw new PlatformNotSupportedException(
-                $"Unsupported platform/architecture: {RuntimeInformation.OSDescription}/{RuntimeInformation.OSArchitecture}. " +
-                "Supported: Linux(x64, arm64), macOS(arm64), Windows(x64).");
+            throw new FileNotFoundException($"Shared library not found at: {ridSpecificPath} or {baseDirPath}");
         }
 
         /// <summary>

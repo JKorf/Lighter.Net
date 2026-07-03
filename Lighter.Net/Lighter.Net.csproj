@@ -59,17 +59,25 @@
     </PackageReference>
     <PackageReference Include="Secp256k1.Net" Version="2.0.0" />
   </ItemGroup>
-  <ItemGroup>
-    <None Pack="true" Update="libs\lighter-signer-darwin-arm64.dylib">
+  <ItemGroup>    
+  <None Include="runtimes\linux-x64\native\liblighter_signer.so" Condition="Exists('runtimes\linux-x64\native\liblighter_signer.so')">
+      <Pack>true</Pack>
+      <PackagePath>runtimes\linux-x64\native\liblighter_signer.so</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Pack="true" Update="libs\lighter-signer-linux-amd64.so">
+    <None Include="runtimes\linux-arm64\native\liblighter_signer.so" Condition="Exists('runtimes\linux-arm64\native\liblighter_signer.so')">
+      <Pack>true</Pack>
+      <PackagePath>runtimes\linux-arm64\native\liblighter_signer.so</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Pack="true" Update="libs\lighter-signer-linux-arm64.so">
+    <None Include="runtimes\osx-arm64\native\liblighter_signer.dylib" Condition="Exists('runtimes\osx-arm64\native\liblighter_signer.dylib')">
+      <Pack>true</Pack>
+      <PackagePath>runtimes\osx-arm64\native\liblighter_signer.dylib</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Pack="true" Update="libs\lighter-signer-windows-amd64.dll">
+    <None Include="runtimes\win-x64\native\lighter_signer.dll" Condition="Exists('runtimes\win-x64\native\lighter_signer.dll')">
+      <Pack>true</Pack>
+      <PackagePath>runtimes\win-x64\native\lighter_signer.dll</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
