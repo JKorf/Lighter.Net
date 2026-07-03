@@ -24,7 +24,8 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         ILeverageRestClient,
         IOpenInterestRestClient,
         IFuturesOrderRestClient,
-        IFuturesOrderClientIdRestClient
+        IFuturesOrderClientIdRestClient,
+        IFundingRateRestClient
     {
     }
 }

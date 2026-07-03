@@ -209,7 +209,7 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         /// GET api/v1/fundings<br />
         /// </para>
         /// </summary>
-        /// <param name="symbol">Symbol name, for example `ETH/USDC` for spot or `ETH` for perps</param>
+        /// <param name="symbol">Symbol name, for example `ETH`</param>
         /// <param name="resolution">["<c>resolution</c>"] Resolution</param>
         /// <param name="startTime">["<c>start_timestamp</c>"] Filter by start time</param>
         /// <param name="endTime">["<c>end_timestamp</c>"] Filter by end time</param>
