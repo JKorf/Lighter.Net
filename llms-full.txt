@@ -4,7 +4,7 @@
 
 Lighter.Net is a strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. It is part of the CryptoExchange.Net ecosystem and uses the same result, shared API, logging, rate limiting, and socket patterns as the other JKorf exchange libraries.
 
-Current package version in this repository: 1.0.0.
+Current package version in this repository: 1.1.0.
 NuGet package id: JKorf.Lighter.Net.
 CryptoExchange.Net dependency: 12.0.1.
 Target frameworks: netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
@@ -22,7 +22,8 @@ Primary documentation:
 
 - Use `LighterRestClient` for REST and `LighterSocketClient` for WebSocket. Do not generate raw `HttpClient` calls or hand-written request signing.
 - Use `LighterCredentials`, not generic `ApiCredentials`, for authenticated Lighter API setup.
-- Include `using Lighter.Net;` when using `LighterCredentials` or `LighterEnvironment`.
+- Pass an `EthKey` to `LighterCredentials`; use `EthKey.FromPrivateKey(...)` when L1 signing is needed, or `EthKey.FromPublicKey(...)` only for authenticated API-key requests that do not require layer-1 signatures.
+- Include `using Lighter.Net;` when using `LighterCredentials`, `EthKey`, or `LighterEnvironment`.
 - Always check `.Success` before reading `.Data`.
 - REST API calls return `HttpResult<T>` or `HttpResult`.
 - `GenerateApiKey()` returns `CallResult<(string PublicKey, string PrivateKey)>`.
@@ -99,19 +100,21 @@ Private account, order, and transaction endpoints require credentials:
 var client = new LighterRestClient(options =>
 {
     options.ApiCredentials = new LighterCredentials(
-        publicAddress: "PUBLIC_ADDRESS",
+        ethKey: EthKey.FromPrivateKey("PRIVATE_KEY"),
         accountIndex: 123,
         apiKeyIndex: 5,
         apiSecret: "API_SECRET");
 });
 ```
 
+If an authenticated API-key request does not need layer-1 signing, credentials can use `EthKey.FromPublicKey("PUBLIC_ADDRESS")` instead.
+
 Socket client with credentials:
 
 ```csharp
 var socketClient = new LighterSocketClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 ```
 
@@ -134,7 +137,7 @@ Integrator fee:
 ```csharp
 var client = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
     options.IntegratorFeePercentage = 0m; // Disable optional integrator fee
 });
 ```
@@ -146,8 +149,8 @@ Current DI shape:
 ```csharp
 services.AddLighter(options =>
 {
-    options.Rest.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
-    options.Socket.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.Rest.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
+    options.Socket.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 ```
 
@@ -328,7 +331,7 @@ using Lighter.Net.Enums;
 
 var client = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 var order = await client.ExchangeApi.Trading.PlaceOrderAsync(
@@ -370,7 +373,7 @@ using Lighter.Net.Enums;
 
 var client = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 var leverage = await client.ExchangeApi.Account.SetLeverageAsync(
@@ -422,7 +425,7 @@ using Lighter.Net.Clients;
 
 var socketClient = new LighterSocketClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 var orderSub = await socketClient.ExchangeApi.Trading.SubscribeToOrderUpdatesAsync(
@@ -470,6 +473,8 @@ if (!ticker.Success)
 
 Console.WriteLine(ticker.Data.LastPrice);
 ```
+
+Lighter also implements the shared REST `IFundingRateRestClient`. Use `GetFundingRateHistoryAsync` with a futures/perpetual `SharedSymbol` when exchange-agnostic code needs historical funding rates.
 
 Shared WebSocket subscriptions return an `UpdateSubscription` in `.Data`. For shared interface variables, unsubscribe through the concrete socket client:
 
@@ -526,10 +531,11 @@ Lighter.Net returns API/network/rate-limit errors through `.Error` on result obj
 Important authenticated-call notes:
 
 ```text
-Missing credentials -> configure LighterCredentials.
+Missing credentials -> configure LighterCredentials with an EthKey.
 Wrong account/api key index -> check accountIndex and apiKeyIndex.
 Transaction nonce conflict -> normally let the library auto-set nonce; manually override only when necessary.
 Signer/native library issue -> ensure packaged signer library is copied and compatible with OS/architecture.
+Layer-1 signature required -> use EthKey.FromPrivateKey(...) so the library can sign the L1 payload.
 Order validation failure -> check symbol, quantity, price, time-in-force, trigger price, reduce-only flag, and account margin.
 ```
 
@@ -580,7 +586,7 @@ Before finalizing generated code:
 - Does it avoid `.Result` and `.Wait()`?
 - Are WebSocket subscriptions unsubscribed on shutdown?
 - For shared socket interfaces, does it keep the concrete socket client for `UnsubscribeAsync(sub.Data)`?
-- For authenticated examples, does it use `LighterCredentials(publicAddress, accountIndex, apiKeyIndex, apiSecret)`?
+- For authenticated examples, does it use `LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), accountIndex, apiKeyIndex, apiSecret)` or `EthKey.FromPublicKey(...)` only when L1 signing is not needed?
 - If integrator-fee behavior matters, does it state or configure `IntegratorFeePercentage` explicitly?
 
 ## Source Of Truth For Method Names
@@ -627,7 +633,7 @@ options.ApiCredentials = new ApiCredentials("key", "secret");
 Use:
 
 ```csharp
-options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 ```
 
 Wrong:

@@ -29,9 +29,11 @@ using Lighter.Net.Clients;
 
 var restClient = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 ```
+
+Use `EthKey.FromPrivateKey(...)` when L1 signing is needed. `EthKey.FromPublicKey(...)` can be used for authenticated API-key requests that do not require layer-1 signatures.
 
 For read-only public market data, credentials are not required:
 
@@ -132,7 +134,7 @@ For authenticated streams:
 ```csharp
 var socketClient = new LighterSocketClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 var orderSub = await socketClient.ExchangeApi.Trading.SubscribeToOrderUpdatesAsync(
@@ -161,7 +163,7 @@ var ticker = await lighterShared.GetSpotTickerAsync(new GetTickerRequest(symbol)
 if (!ticker.Success) { Console.WriteLine(ticker.Error); return; }
 ```
 
-Available shared REST interfaces include `ISpotTickerRestClient`, `IFuturesTickerRestClient`, `IBookTickerRestClient`, `IRecentTradeRestClient`, `IOrderBookRestClient`, `IAssetsRestClient`, `IDepositRestClient`, `IWithdrawalRestClient`, `IFeeRestClient`, `IBalanceRestClient`, `ISpotOrderRestClient`, `IFuturesOrderRestClient`, and leverage/open-interest interfaces.
+Available shared REST interfaces include `ISpotTickerRestClient`, `IFuturesTickerRestClient`, `IBookTickerRestClient`, `IRecentTradeRestClient`, `IOrderBookRestClient`, `IAssetsRestClient`, `IDepositRestClient`, `IWithdrawalRestClient`, `IFeeRestClient`, `IBalanceRestClient`, `ISpotOrderRestClient`, `IFuturesOrderRestClient`, `IFundingRateRestClient`, and leverage/open-interest interfaces.
 
 Available shared socket interfaces include `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, `ISpotOrderSocketClient`, `IFuturesOrderSocketClient`, `IUserTradeSocketClient`, and `IPositionSocketClient`.
 
@@ -172,8 +174,8 @@ using Lighter.Net;
 
 services.AddLighter(options =>
 {
-    options.Rest.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
-    options.Socket.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.Rest.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
+    options.Socket.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 
 // Inject ILighterRestClient and ILighterSocketClient into your services.
@@ -186,7 +188,7 @@ Lighter.Net uses Lighter's integrator-code mechanism by default. This is optiona
 ```csharp
 var restClient = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
     options.IntegratorFeePercentage = 0m;
 });
 ```
@@ -199,6 +201,7 @@ Use `null` or `0` when the user explicitly asks to disable the integrator fee.
 - Do NOT create a non-existent `LighterClient`; use `LighterRestClient` or `LighterSocketClient`.
 - Do NOT use `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi`; use `ExchangeApi`.
 - Do NOT confuse `LighterCredentials` with generic `ApiCredentials`.
+- Do NOT pass a raw public address string to `LighterCredentials`; pass `EthKey.FromPrivateKey(...)` or `EthKey.FromPublicKey(...)`.
 - Do NOT manually sign requests or manage nonces unless explicitly requested.
 - Do NOT mix sync and async. Always use `await` with async methods. Never use `.Result` or `.Wait()`.
 - Do NOT instantiate clients per request. Create once and reuse; use DI in production.

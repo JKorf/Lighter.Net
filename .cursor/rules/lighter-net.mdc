@@ -18,11 +18,12 @@ using Lighter.Net.Clients;
 
 var restClient = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 ```
 
 For public market data only, no credentials needed: `new LighterRestClient()`.
+Use `EthKey.FromPrivateKey(...)` when L1 signing is needed; `EthKey.FromPublicKey(...)` is only for authenticated API-key requests that do not need layer-1 signatures.
 
 ## Result pattern
 
@@ -98,7 +99,7 @@ var ticker = await shared.GetSpotTickerAsync(
 - Never instantiate clients per request; reuse via DI.
 - Never skip checking result `.Success`.
 - Never use Binance-style `SpotApi` or `FuturesApi`; use `ExchangeApi`.
-- Never use generic `ApiCredentials`; use `LighterCredentials("PUBLIC_ADDRESS", accountIndex, apiKeyIndex, "API_SECRET")`.
+- Never use generic `ApiCredentials`; use `LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), accountIndex, apiKeyIndex, "API_SECRET")`.
 - Always store WebSocket subscriptions and unsubscribe on shutdown.
 - Always use `client.ExchangeApi.SharedClient` for cross-exchange code.
 - Set `IntegratorFeePercentage = 0` or `null` only when the user wants to disable the optional integrator fee.

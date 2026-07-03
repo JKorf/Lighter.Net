@@ -10,11 +10,12 @@ using Lighter.Net.Clients;
 
 var restClient = new LighterRestClient(options =>
 {
-    options.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 ```
 
 Public market data can use `new LighterRestClient()` without credentials. Use `LighterSocketClient` for WebSocket subscriptions and socket transaction requests.
+Use `EthKey.FromPrivateKey(...)` when L1 signing is needed. `EthKey.FromPublicKey(...)` is only for authenticated API-key requests that do not require layer-1 signatures.
 
 ## API surface
 
@@ -97,8 +98,8 @@ var ticker = await shared.GetSpotTickerAsync(
 ```csharp
 services.AddLighter(options =>
 {
-    options.Rest.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
-    options.Socket.ApiCredentials = new LighterCredentials("PUBLIC_ADDRESS", 123, 5, "API_SECRET");
+    options.Rest.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
+    options.Socket.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
 ```
 
@@ -108,6 +109,7 @@ Inject `ILighterRestClient` and `ILighterSocketClient`.
 
 - Never use raw `HttpClient` or manual signing for Lighter API calls.
 - Never use generic `ApiCredentials`; use `LighterCredentials`.
+- Never pass a raw public address string to `LighterCredentials`; pass an `EthKey`.
 - Never use `.Result` or `.Wait()`.
 - Never instantiate clients per request.
 - Never read `.Data` before checking `.Success`.

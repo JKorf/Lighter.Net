@@ -192,6 +192,15 @@ Make a one time donation in a crypto currency of your choice. If you prefer to d
 Alternatively, sponsor me on Github using [Github Sponsors](https://github.com/sponsors/JKorf). 
 
 ## Release notes
+* Version 1.1.0 - 03 Jul 2026
+    * Added IFundingRateRestClient Shared API implementation
+    * Updated authentication, added L1 signing support
+    * Fixed missing namespaces for some enums
+    * Fixed libraries not getting included in Nuget/publish
+
+    * Notes for updating:
+        * API credentials providing has been updated to now take a EthKey object, for example `new LighterCredentials(EthKey.FromPublicKey(..), ..)`
+
 * Version 1.0.1 - 30 Jun 2026
     * Fixed WebSocket unsubscribe not working correctly
 

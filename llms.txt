@@ -2,7 +2,7 @@
 
 > Strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. Part of the CryptoExchange.Net ecosystem, with shared API abstractions for multi-exchange code.
 
-Lighter.Net provides typed access to Lighter public market data, account data, order management, transaction signing, WebSocket subscriptions, automatic WebSocket reconnection, client-side rate limiting, local order book support, account management helpers, and native AOT support. Current version: 1.0.0. Targets netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
+Lighter.Net provides typed access to Lighter public market data, account data, order management, transaction signing, WebSocket subscriptions, automatic WebSocket reconnection, client-side rate limiting, local order book support, account management helpers, and native AOT support. Current version: 1.1.0. Targets netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
 
 REST methods return `HttpResult<T>` / `HttpResult`, local non-I/O helpers return `CallResult<T>`, WebSocket subscriptions return `WebSocketResult<UpdateSubscription>`, WebSocket request/transaction methods return `QueryResult<T>`, and shared non-I/O symbol/cache helpers return `ExchangeCallResult<T>`. For multi-exchange code use `client.ExchangeApi.SharedClient` and call `.Discover()` before routing optional shared features.
 
@@ -17,7 +17,7 @@ REST methods return `HttpResult<T>` / `HttpResult`, local non-I/O helpers return
 
 - Use `LighterRestClient` for REST and `LighterSocketClient` for WebSocket. Do not generate raw `HttpClient` or manual WebSocket calls to Lighter endpoints.
 - The top-level API branch is `ExchangeApi`; there are no `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi` properties.
-- Public data calls do not need credentials. Trading, account, and transaction-signing calls need `LighterCredentials(publicAddress, accountIndex, apiKeyIndex, apiSecret)`.
+- Public data calls do not need credentials. Trading, account, and transaction-signing calls need `LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), accountIndex, apiKeyIndex, apiSecret)`. Use `EthKey.FromPublicKey(...)` only for authenticated API-key requests that do not require layer-1 signatures.
 - Lighter symbols are strings such as `ETH/USDC` for spot and `ETH` for perps.
 - Transaction methods can auto-set nonces when credentials are configured. Do not manually manage nonces unless the caller explicitly needs that control.
 - The library uses Lighter integrator-code support by default. Set `IntegratorFeePercentage = 0` or `null` in rest/socket options to disable the optional integrator fee.
