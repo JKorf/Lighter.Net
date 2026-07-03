@@ -60,16 +60,16 @@
     <PackageReference Include="Secp256k1.Net" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="libs\lighter-signer-darwin-arm64.dylib">
+    <None Pack="true" Update="libs\lighter-signer-darwin-arm64.dylib">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="libs\lighter-signer-linux-amd64.so">
+    <None Pack="true" Update="libs\lighter-signer-linux-amd64.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="libs\lighter-signer-linux-arm64.so">
+    <None Pack="true" Update="libs\lighter-signer-linux-arm64.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="libs\lighter-signer-windows-amd64.dll">
+    <None Pack="true" Update="libs\lighter-signer-windows-amd64.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
