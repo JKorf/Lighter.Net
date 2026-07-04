@@ -192,6 +192,9 @@ Make a one time donation in a crypto currency of your choice. If you prefer to d
 Alternatively, sponsor me on Github using [Github Sponsors](https://github.com/sponsors/JKorf). 
 
 ## Release notes
+* Version 1.1.2 - 04 Jul 2026
+    * Fixed signer libs not getting included in output
+
 * Version 1.1.1 - 03 Jul 2026
     * Fixed native library finding when using NuGet package
 
