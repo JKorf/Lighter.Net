@@ -83,7 +83,7 @@ namespace Lighter.Net
         public static string GetAuthToken(string? libraryPath, string url, LighterCredentials credentials)
         {
             var key = $"{credentials.Credential.AccountIndex}:{credentials.Credential.ApiKeyIndex}";
-            if (!_authTokenDictionary.TryGetValue(key, out CachedAuthToken? authToken))
+            if (!_authTokenDictionary.TryGetValue(key, out CachedAuthToken? authToken) || authToken.Expiry <= DateTime.UtcNow)
             {
                 var expireTime = DateTime.UtcNow.AddHours(1);
                 var signClient = GetSigner(libraryPath, url, credentials);
