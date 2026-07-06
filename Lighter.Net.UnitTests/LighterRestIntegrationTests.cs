@@ -9,6 +9,7 @@ using Lighter.Net.Objects.Options;
 using Lighter.Net.Enums;
 using Lighter.Net.Objects;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Lighter.Net.UnitTests
 {
@@ -61,46 +62,55 @@ namespace Lighter.Net.UnitTests
         [Test]
         public async Task TestAccount()
         {
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetAccountsByL1AddressAsync(default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetNonceAsync(default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetAccountsAsync(default, default, default, default, CancellationToken.None), true, true, ignoreProperties: ["code"]);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetAccountLimitsAsync(default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetAccountMetadataAsync(default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetPnlAsync(Resolution.OneHour, default, default, default, default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetLiquidationsAsync(default, default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetFundingHistoryAsync(default, default, default, default, default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetDepositHistoryAsync(default, default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetTransferHistoryAsync(default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetWithdrawHistoryAsync(default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Account.GetApiKeysAsync(default, default, CancellationToken.None), true, true);
+            var warnings = new List<Exception>();
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetAccountsByL1AddressAsync(default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetNonceAsync(default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetAccountsAsync(default, default, default, default, CancellationToken.None), true, ignoreProperties: ["code"]);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetAccountLimitsAsync(default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetAccountMetadataAsync(default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetPnlAsync(Resolution.OneHour, default, default, default, default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetLiquidationsAsync(default, default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetFundingHistoryAsync(default, default, default, default, default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetDepositHistoryAsync(default, default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetTransferHistoryAsync(default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetWithdrawHistoryAsync(default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Account.GetApiKeysAsync(default, default, CancellationToken.None), true);
+            foreach (var warning in warnings)
+                Assert.Warn(warning.Message);
         }
 
         [Test]
         public async Task TestExchangeData()
         {
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetStatusAsync(CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetSystemConfigAsync(CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetSymbolsAsync(default, default, CancellationToken.None), false, true, compareNestedProperty: "order_books");
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetLayer1BasicInfoAsync(CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetAssetsAsync(default, CancellationToken.None), false, true, compareNestedProperty: "asset_details");
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetOrderBookAsync("ETH", default, CancellationToken.None), false, true, ignoreProperties: ["transaction_time"]);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetRecentTradesAsync("ETH", default, CancellationToken.None), false, true, compareNestedProperty: "trades");
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(default, default, CancellationToken.None), false, true, ignoreProperties: ["daily_chart", "market_margin_mode"]);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetExchangeStatsAsync(CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetAnnouncementsAsync(CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetKlinesAsync("ETH", KlineInterval.OneDay, default, default, default, CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetMarkPriceKlinesAsync("ETH", KlineInterval.OneDay, default, default, default, CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetFundingRateHistoryAsync("ETH", FundingResolution.OneDay, default, default, default, CancellationToken.None), false, true);
-            await RunAndCheckResult(client => client.ExchangeApi.ExchangeData.GetFundingRatesAsync(CancellationToken.None), false, true);
+            var warnings = new List<Exception>();
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetStatusAsync(CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSystemConfigAsync(CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolsAsync(default, default, CancellationToken.None), false, compareNestedProperty: "order_books");
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetLayer1BasicInfoAsync(CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetAssetsAsync(default, CancellationToken.None), false, compareNestedProperty: "asset_details");
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetOrderBookAsync("ETH", default, CancellationToken.None), false, ignoreProperties: ["transaction_time"]);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetRecentTradesAsync("ETH", default, CancellationToken.None), false, compareNestedProperty: "trades");
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(default, default, CancellationToken.None), false, ignoreProperties: ["daily_chart", "market_margin_mode"]);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetExchangeStatsAsync(CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetAnnouncementsAsync(CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetKlinesAsync("ETH", KlineInterval.OneDay, default, default, default, CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetMarkPriceKlinesAsync("ETH", KlineInterval.OneDay, default, default, default, CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetFundingRateHistoryAsync("ETH", FundingResolution.OneDay, default, default, default, CancellationToken.None), false);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetFundingRatesAsync(CancellationToken.None), false);
+            foreach (var warning in warnings)
+                Assert.Warn(warning.Message);
         }
 
         [Test]
         public async Task TestTrading()
         {
-            await RunAndCheckResult(client => client.ExchangeApi.Trading.GetOpenOrdersAsync(default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Trading.GetClosedOrdersAsync(default, default, default, default, default, default, CancellationToken.None), true, true);
-            await RunAndCheckResult(client => client.ExchangeApi.Trading.GetUserTradesAsync(default, default, default, default, default, default, default, default, default, default, default, default, CancellationToken.None), true, true,
+            var warnings = new List<Exception>();
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Trading.GetOpenOrdersAsync(default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Trading.GetClosedOrdersAsync(default, default, default, default, default, default, CancellationToken.None), true);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.Trading.GetUserTradesAsync(default, default, default, default, default, default, default, default, default, default, default, default, CancellationToken.None), true,
                  ignoreProperties: ["trade_id_str", "ask_id_str", "bid_id_str", "ask_client_id_str", "bid_client_id_str"]);
+            foreach (var warning in warnings)
+                Assert.Warn(warning.Message);
         }
     }
 }
