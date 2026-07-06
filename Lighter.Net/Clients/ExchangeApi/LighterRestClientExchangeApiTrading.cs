@@ -56,8 +56,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
 
-            var actPrice = (int)(price * 100);
-            var actTriggerPrice = (int?)(triggerPrice * 100);
+            var actPrice = (int)(price * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
+            var actTriggerPrice = (int?)(triggerPrice * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
             var actQuantity = (long)(quantity * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedQuantityDecimals)));
             var actClientIndex = clientOrderIndex ?? ExchangeHelpers.RandomLong(9);
             DateTime? actExpiry = timeInForce == TimeInForce.GoodTillTime ? (orderExpiry ?? DateTime.UtcNow.AddDays(28)) : null;
