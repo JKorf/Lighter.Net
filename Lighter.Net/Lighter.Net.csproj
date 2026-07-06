@@ -7,9 +7,9 @@
   <PropertyGroup>
     <PackageId>JKorf.Lighter.Net</PackageId>
     <Authors>JKorf</Authors>
-    <PackageVersion>1.1.3</PackageVersion>
-    <AssemblyVersion>1.1.3</AssemblyVersion>
-    <FileVersion>1.1.3</FileVersion>
+    <PackageVersion>1.1.4</PackageVersion>
+    <AssemblyVersion>1.1.4</AssemblyVersion>
+    <FileVersion>1.1.4</FileVersion>
     <Description>A high-performance .NET client library for the Lighter REST and WebSocket APIs, providing strongly typed models, automatic WebSocket reconnection, client-side rate limiting, local order book support, and seamless integration with other CryptoExchange.Net based clients.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>Lighter;Lighter.Net;DEX;Lighter Client;Lighter API;CryptoCurrency;CryptoCurrency Exchange;CryptoExchange.Net</PackageTags>
