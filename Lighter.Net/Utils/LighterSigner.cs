@@ -178,7 +178,19 @@ namespace Lighter.Net.Utils
         private delegate SignedTxResponse SignCancelAllOrdersDelegate(int timeInForce, long time, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate SignedTxResponse SignModifyOrderDelegate(int marketIndex, long index, long baseAmount, long price, long triggerPrice, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
+        private delegate SignedTxResponse SignModifyOrderDelegate(
+            int marketIndex, 
+            long index, 
+            long baseAmount, 
+            long price, 
+            long triggerPrice,
+            long integratorAccountIndex,
+            int integratorTakerFee,
+            int integratorMakerFee,
+            byte skipNonce,
+            long nonce, 
+            int apiKeyIndex, 
+            long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate SignedTxResponse SignTransferDelegate(
@@ -365,8 +377,33 @@ namespace Lighter.Net.Utils
         public SignedTx SignCancelAllOrders(int timeInForce, long time, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
             => ParseSignedTx(_signCancelAllOrders(timeInForce, time, skipNonce, nonce, apiKeyIndex, accountIndex));
 
-        public SignedTx SignModifyOrder(int marketIndex, long index, long baseAmount, long price, long triggerPrice, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
-            => ParseSignedTx(_signModifyOrder(marketIndex, index, baseAmount, price, triggerPrice, skipNonce, nonce, apiKeyIndex, accountIndex));
+        public SignedTx SignModifyOrder(
+            int marketIndex,
+            long index,
+            long baseAmount, 
+            long price,
+            long triggerPrice,
+            long integratorAccountIndex,
+            int integratorTakerFee,
+            int integratorMakerFee,
+            byte skipNonce,
+            long nonce, 
+            int apiKeyIndex,
+            long accountIndex)
+            => ParseSignedTx(
+                _signModifyOrder(
+                    marketIndex,
+                    index, 
+                    baseAmount,
+                    price, 
+                    triggerPrice, 
+                    integratorAccountIndex,
+                    integratorTakerFee, 
+                    integratorMakerFee,
+                    skipNonce,
+                    nonce,
+                    apiKeyIndex,
+                    accountIndex));
 
         public SignedTx SignTransfer(long toAccountIndex, short assetIndex, byte fromRouteType, byte toRouteType, long amount, long usdcFee, string memo, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
         {

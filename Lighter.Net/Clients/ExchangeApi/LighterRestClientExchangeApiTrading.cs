@@ -201,12 +201,25 @@ namespace Lighter.Net.Clients.ExchangeApi
             var actTriggerPrice = (int?)(triggerPrice * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
             var actQuantity = (long)(quantity * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedQuantityDecimals)));
 
+            int integratorFeePercentage = 0;
+            long integratorFeeAccountIndex = 0;
+            if (_baseClient.ClientOptions.IntegratorFeePercentage > 0
+                && _baseClient.ClientOptions.IntegratorAccountIndex != null
+                && LighterUtils.IntegratorFeeUsable(_baseClient.ApiCredentials!))
+            {
+                integratorFeeAccountIndex = _baseClient.ClientOptions.IntegratorAccountIndex.Value;
+                integratorFeePercentage = (int)(_baseClient.ClientOptions.IntegratorFeePercentage.Value * 10000);
+            }
+
             var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignModifyOrder(
                 symbolInfo.Data.MarketId,
                 orderIndex,
                 actQuantity,
                 actPrice,
                 actTriggerPrice ?? 0,
+                integratorFeeAccountIndex,
+                integratorFeePercentage,
+                integratorFeePercentage,
                 0x1,
                 nonce.Value,
                 _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,
