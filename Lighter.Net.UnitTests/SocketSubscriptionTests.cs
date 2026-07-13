@@ -22,12 +22,15 @@ namespace Lighter.Net.UnitTests
 
             var client = new LighterSocketClient(Options.Create(new LighterSocketOptions
             {
-                //opts.ApiCredentials = new LighterCredentials("123", "456");
+                ApiCredentials = new LighterCredentials(EthKey.FromPublicKey("1"), 1, 1, "1"),
                 Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress)
             }), logger);
             var tester = new SocketSubscriptionValidator<LighterSocketClient>(client, "Subscriptions/Exchange", "wss://mainnet.zklighter.elliot.ai/stream");
             await tester.ValidateAsync<LighterSpotTickerUpdate>((client, handler) => client.ExchangeApi.ExchangeData.SubscribeToSpotTickerUpdatesAsync("ETH/USDC", handler), "SpotTicker");
             await tester.ValidateAsync<LighterKlineUpdate>((client, handler) => client.ExchangeApi.ExchangeData.SubscribeToKlineUpdatesAsync("ETH/USDC", Enums.KlineInterval.OneHour, handler), "Kline");
+
+            await tester.ValidateAsync<LighterAccountUpdate>((client, handler) => client.ExchangeApi.Account.SubscribeToAccountUpdatesAsync(null, handler), "Accounts", ignoreProperties: ["shares"]);
+            await tester.ValidateAsync<LighterAccountUpdate>((client, handler) => client.ExchangeApi.Account.SubscribeToAccountUpdatesAsync(null, handler), "Accounts2", ignoreProperties: ["shares"]);
         }
 
         [TestCase]

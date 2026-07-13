@@ -1,0 +1,81 @@
+> { "type": "subscribe", "channel": "account_all/1" }
+= 
+{
+   "account": 1,
+   "assets": {
+      "1": {
+         "symbol":"ETH",
+         "asset_id":1,
+         "balance":"1",
+         "locked_balance":"0.00000000"
+      }
+   },
+    "channel": "account_all:1",
+    "daily_trades_count": 123,
+    "daily_volume": 234,
+    "weekly_trades_count": 345,
+    "weekly_volume": 456,
+    "monthly_trades_count": 567,
+    "monthly_volume": 678,
+    "total_trades_count": 891,
+    "total_volume": 912,
+    "funding_histories": { "1": [{
+            "timestamp": 1700000000,
+            "market_id": 101,
+            "funding_id": 2001,
+            "change": "0.001",
+            "rate": "0.0001",
+            "position_size": "0.5",
+            "position_side": "long"
+        }] },
+    "positions": {
+        "1": {
+            "market_id": 101,
+            "symbol": "BTC-USD",
+            "initial_margin_fraction": "0.1",
+            "open_order_count": 2,
+            "pending_order_count": 1,
+            "position_tied_order_count": 3,
+            "sign": 1,
+            "position": "0.5",
+            "avg_entry_price": "20000.00",
+            "position_value": "10000.00",
+            "unrealized_pnl": "500.00",
+            "realized_pnl": "100.00",
+            "liquidation_price": "3024.66",
+            "total_funding_paid_out": "34.2",
+            "margin_mode": 1,
+            "allocated_margin": "46342"
+        }
+    },
+    "shares": {
+        "public_pool_index": 1,
+        "shares_amount": 100,
+        "entry_usdc": "1000.00"
+    },
+    "trades": {
+        "1": [{
+            "trade_id": 401,
+            "tx_hash": "0xabc123456789",
+            "type": "trade",
+            "market_id": 101,
+            "size": "0.5",
+            "price": "20000.00",
+            "usd_amount": "10000.00",
+            "ask_id": 501,
+            "bid_id": 502,
+            "ask_account_id": 123456,
+            "bid_account_id": 654321,
+            "is_maker_ask": true,
+            "block_height": 1500000,
+            "timestamp": 1700000000,
+            "taker_position_size_before":"1.14880",
+            "taker_entry_quote_before":"136130.046511",
+            "taker_initial_margin_fraction_before":500,
+            "maker_position_size_before":"-0.02594",
+            "maker_entry_quote_before":"3075.396750",
+            "maker_initial_margin_fraction_before":400
+        }]
+    },
+    "type": "subscribed/account_all"
+}

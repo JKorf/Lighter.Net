@@ -1,0 +1,27 @@
+> { "type": "subscribe", "channel": "account_all/1" }
+= 
+{
+	"account":1,
+	"assets":null,
+	"channel":"account_all:1",
+	"funding_histories":{
+		"0":[{
+			"timestamp":1783947600,
+			"market_id":0,
+			"funding_id":1232541,
+			"change":"-0.000212",
+			"rate":"0.000012",
+			"position_size":"0.0100",
+			"position_side":"long",
+			"discount":"0.000000"
+			}
+		]
+	},
+	"positions":{
+	},
+	"shares":[
+	],
+	"trades":{
+	},
+	"type":"update/account_all"
+}
