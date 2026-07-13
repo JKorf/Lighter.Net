@@ -32,7 +32,7 @@ namespace Lighter.Net
             }
 
             var token = LighterUtils.GetAuthToken(((LighterRestClientExchangeApi)apiClient).ClientOptions.LibraryPath, apiClient.BaseAddress, ApiCredentials);
-            requestConfig.QueryParameters.Add("auth", token);
+            requestConfig.QueryParameters["auth"] = token;
         }
 
         public string CreateL1Signature(string msg)
