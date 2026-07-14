@@ -899,7 +899,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
                 request.OrderId,
                 x.TradeId.ToString(),
-                x.IsMakerAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                 x.Quantity,
                 x.Price,
                 x.Timestamp)
@@ -951,7 +951,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                         LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
                         (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                         x.TradeId.ToString(),
-                        x.IsMakerAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                        x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                         x.Quantity,
                         x.Price,
                         x.Timestamp)
@@ -1331,7 +1331,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
                 request.OrderId,
                 x.TradeId.ToString(),
-                x.IsMakerAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                 x.Quantity,
                 x.Price,
                 x.Timestamp)
@@ -1383,7 +1383,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                         LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
                         (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                         x.TradeId.ToString(),
-                        x.IsMakerAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                        x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                         x.Quantity,
                         x.Price,
                         x.Timestamp)
