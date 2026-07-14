@@ -192,6 +192,9 @@ Make a one time donation in a crypto currency of your choice. If you prefer to d
 Alternatively, sponsor me on Github using [Github Sponsors](https://github.com/sponsors/JKorf). 
 
 ## Release notes
+* Version 1.2.2 - 14 Jul 2026
+    * Fixed Shared API UserTrades incorrect order side parsing
+
 * Version 1.2.1 - 13 Jul 2026
     * Updated LighterAccountUpdate model fixing deserialization issue when FundingHistories is set
     * Fixed exception during authentication when retrying requests
