@@ -55,6 +55,19 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
             CancellationToken ct = default);
 
         /// <summary>
+        /// Get info on tokens
+        /// <para>
+        /// Docs:<br />
+        /// <a href="https://apidocs.lighter.xyz/reference/tokenlist-1" /><br />
+        /// Endpoint:<br />
+        /// GET /api/v1/tokenlist<br />
+        /// </para>
+        /// </summary>
+        /// <param name="ct">Cancellation token</param>
+        Task<HttpResult<LighterToken[]>> GetTokensAsync(
+            CancellationToken ct = default);
+
+        /// <summary>
         /// Get layer 1 basic info
         /// <para>
         /// Docs:<br />

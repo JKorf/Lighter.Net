@@ -88,6 +88,8 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Spot Symbol client
+
+        SharedSymbolCatalog? ISpotSymbolRestClient.SpotSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_topicSpotId, EnvironmentName, null);
         GetSpotSymbolsOptions ISpotSymbolRestClient.GetSpotSymbolsOptions { get; }
             = new GetSpotSymbolsOptions(_exchangeName, false);
 
@@ -97,31 +99,45 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotSymbol[]>(Exchange, validationError);
 
-            var resultAssets = ExchangeData.GetAssetsAsync();
-            var resultSymbols = ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Spot, ct: ct);
-            await Task.WhenAll(resultAssets, resultSymbols).ConfigureAwait(false);
-            if (!resultAssets.Result.Success)
-                return HttpResult.Fail<SharedSpotSymbol[]>(resultAssets.Result);
-            if (!resultSymbols.Result.Success)
-                return HttpResult.Fail<SharedSpotSymbol[]>(resultSymbols.Result);
+            var assetTask = ExchangeData.GetAssetsAsync();
+            var symbolTask = ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Spot, ct: ct);
+            await Task.WhenAll(assetTask, symbolTask).ConfigureAwait(false);
+            var assetsResult = assetTask.Result;
+            var symbolsResult = symbolTask.Result;
+            if (!assetsResult.Success)
+                return HttpResult.Fail<SharedSpotSymbol[]>(assetsResult);
+            if (!symbolsResult.Success)
+                return HttpResult.Fail<SharedSpotSymbol[]>(symbolsResult);
 
-            var resultData = resultSymbols.Result.Data!.Select(s => {
-                var baseAsset = resultAssets.Result.Data.SingleOrDefault(x => x.AssetId == s.BaseAssetId);
-                var quoteAsset = resultAssets.Result.Data.SingleOrDefault(x => x.AssetId == s.QuoteAssetId);
-                if (baseAsset == null || quoteAsset == null)
-                    return null;
+            var data = symbolsResult.Data
+               .Select(x => ParseSpotSymbol(x, assetsResult.Data)!)
+               .Where(x => x != null)
+               .ToArray();
 
-                return new SharedSpotSymbol(baseAsset.Symbol, quoteAsset.Symbol, s.Symbol, s.Status == SymbolStatus.Active)
-                {
-                    MinTradeQuantity = s.MinBaseQuantity,
-                    MinNotionalValue = s.MinQuoteQuantity,
-                    PriceDecimals = s.SupportedPriceDecimals,
-                    QuantityDecimals = s.SupportedQuantityDecimals
-                };
-            }).Where(x => x != null).ToArray();
+            ExchangeSymbolCache.UpdateSymbolInfo(_topicSpotId, EnvironmentName, null, data);
+            return HttpResult.Ok(symbolsResult, SharedUtils.ApplySymbolFilter(data, request));
+        }
 
-            ExchangeSymbolCache.UpdateSymbolInfo(_topicSpotId, EnvironmentName, null, resultData!);
-            return HttpResult.Ok<SharedSpotSymbol[]>(resultSymbols.Result, resultData!);
+        private SharedSpotSymbol? ParseSpotSymbol(LighterSymbol s, LighterAsset[] assets)
+        {
+            var baseAsset = assets.SingleOrDefault(x => x.AssetId == s.BaseAssetId);
+            var quoteAsset = assets.SingleOrDefault(x => x.AssetId == s.QuoteAssetId);
+            if (baseAsset == null || quoteAsset == null)
+                return null;
+
+            var result = new SharedSpotSymbol(baseAsset.Symbol, quoteAsset.Symbol, s.Symbol, s.Status == SymbolStatus.Active)
+            {
+                MinTradeQuantity = s.MinBaseQuantity,
+                MinNotionalValue = s.MinQuoteQuantity,
+                PriceDecimals = s.SupportedPriceDecimals,
+                QuantityDecimals = s.SupportedQuantityDecimals,
+                DisplayName = baseAsset.Symbol,
+                BaseAssetType = SharedAssetType.Crypto,
+                QuoteAssetType = SharedAssetType.Crypto,
+                QuoteAssetSubType = SharedAssetSubType.StableCoin
+            };
+
+            return result;
         }
 
         async Task<ExchangeCallResult<SharedSymbol[]>> ISpotSymbolRestClient.GetSpotSymbolsForBaseAssetAsync(string baseAsset)
@@ -166,6 +182,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Symbol client
 
+        SharedSymbolCatalog? IFuturesSymbolRestClient.FuturesSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_topicFuturesId, EnvironmentName, null);
         GetFuturesSymbolsOptions IFuturesSymbolRestClient.GetFuturesSymbolsOptions { get; } = new GetFuturesSymbolsOptions(_exchangeName, false);
         async Task<HttpResult<SharedFuturesSymbol[]>> IFuturesSymbolRestClient.GetFuturesSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
         {
@@ -173,30 +190,76 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesSymbol[]>(Exchange, validationError);
 
-            var resultSymbols = await ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Perp, ct: ct).ConfigureAwait(false);
+            var symbolsTask = ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Perp, ct: ct);
+            var tokensTask = ExchangeData.GetTokensAsync(ct: ct);
+            await Task.WhenAll(symbolsTask, tokensTask).ConfigureAwait(false);
+            var resultSymbols = symbolsTask.Result;
+            var resultTokens = tokensTask.Result;
             if (!resultSymbols.Success)
                 return HttpResult.Fail<SharedFuturesSymbol[]>(resultSymbols);
+            if (!resultTokens.Success)
+                return HttpResult.Fail<SharedFuturesSymbol[]>(resultTokens);
 
-            var resultData = resultSymbols.Data!.Select(ParseSymbol).ToArray();
+            var resultData =
+                resultSymbols.Data!
+                .Select(x => ParseFuturesSymbol(x, resultTokens.Data))
+                .ToArray();
 
             // Register both LIT/USDC and LIT as symbol names
             var symbolRegistrations = resultData
                 .Concat(resultSymbols.Data.Select(x => new SharedFuturesSymbol(TradingMode.PerpetualLinear, x.Symbol, "USDC", x.Symbol, true))).ToArray();
 
-            ExchangeSymbolCache.UpdateSymbolInfo(_topicFuturesId, EnvironmentName, null, symbolRegistrations);
-
-            return HttpResult.Ok(resultSymbols, resultData!);
+            ExchangeSymbolCache.UpdateSymbolInfo(_topicSpotId, EnvironmentName, null, symbolRegistrations);
+            return HttpResult.Ok(resultSymbols, SharedUtils.ApplySymbolFilter(resultData, request));
         }
 
-        private SharedFuturesSymbol ParseSymbol(LighterSymbol s)
+        private SharedFuturesSymbol ParseFuturesSymbol(LighterSymbol s, LighterToken[] tokens)
         {
-            return new SharedFuturesSymbol(TradingMode.PerpetualLinear, s.Symbol, "USDC", $"{s.Symbol}/USDC", s.Status == SymbolStatus.Active)
+            var result = new SharedFuturesSymbol(TradingMode.PerpetualLinear, s.Symbol, "USDC", $"{s.Symbol}/USDC", s.Status == SymbolStatus.Active)
             {
                 MinTradeQuantity = s.MinBaseQuantity,
                 MinNotionalValue = s.MinQuoteQuantity,
                 PriceDecimals = s.SupportedPriceDecimals,
                 QuantityDecimals = s.SupportedQuantityDecimals,
+                DisplayName = s.Symbol,
+                QuoteAssetType = SharedAssetType.Crypto,
+                QuoteAssetSubType = SharedAssetSubType.StableCoin
             };
+
+            var compareName = s.Symbol.StartsWith("1000") ? "k" + s.Symbol.Substring(4) : s.Symbol;
+            var tokenInfo = tokens.SingleOrDefault(x => x.Symbol == compareName);
+            if (tokenInfo != null)
+            {
+                if (tokenInfo.AssetType == AssetType.Crypto)
+                {
+                    result.BaseAssetType = SharedAssetType.Crypto;
+                }
+                else 
+                {
+                    if (tokenInfo.Categories.Contains("FX", StringComparer.OrdinalIgnoreCase))
+                    {
+                        result.BaseAssetType = SharedAssetType.Fiat;
+                    }
+                    else if (tokenInfo.Categories.Contains("STOCK", StringComparer.OrdinalIgnoreCase)
+                        || tokenInfo.Categories.Contains("ETF", StringComparer.OrdinalIgnoreCase)
+                        || tokenInfo.Categories.Contains("PRE_IPO", StringComparer.OrdinalIgnoreCase))
+                    {
+                        result.BaseAssetType = SharedAssetType.TradFi;
+                        result.BaseAssetSubType = SharedAssetSubType.Equity;
+                    }
+                    else if (tokenInfo.Categories.Contains("COMMODITIES", StringComparer.OrdinalIgnoreCase))
+                    {
+                        result.BaseAssetType = SharedAssetType.TradFi;
+                        result.BaseAssetSubType = SharedAssetSubType.Commodity;
+                    }
+                    else
+                    {
+                        result.BaseAssetType = SharedAssetType.TradFi;
+                    }
+                }
+            }
+
+            return result;
         }
 
         async Task<ExchangeCallResult<SharedSymbol[]>> IFuturesSymbolRestClient.GetFuturesSymbolsForBaseAssetAsync(string baseAsset)
