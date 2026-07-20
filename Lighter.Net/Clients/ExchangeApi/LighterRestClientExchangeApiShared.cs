@@ -89,7 +89,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Spot Symbol client
 
-        SharedSymbolCatalog? ISpotSymbolRestClient.SpotSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_topicSpotId, EnvironmentName, null);
+        SharedSymbolCatalog? ISpotSymbolRestClient.SpotSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicSpotId, EnvironmentName, null);
         GetSpotSymbolsOptions ISpotSymbolRestClient.GetSpotSymbolsOptions { get; }
             = new GetSpotSymbolsOptions(_exchangeName, false);
 
@@ -182,7 +182,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Symbol client
 
-        SharedSymbolCatalog? IFuturesSymbolRestClient.FuturesSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_topicFuturesId, EnvironmentName, null);
+        SharedSymbolCatalog? IFuturesSymbolRestClient.FuturesSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicFuturesId, EnvironmentName, null);
         GetFuturesSymbolsOptions IFuturesSymbolRestClient.GetFuturesSymbolsOptions { get; } = new GetFuturesSymbolsOptions(_exchangeName, false);
         async Task<HttpResult<SharedFuturesSymbol[]>> IFuturesSymbolRestClient.GetFuturesSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
         {
@@ -209,7 +209,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             var symbolRegistrations = resultData
                 .Concat(resultSymbols.Data.Select(x => new SharedFuturesSymbol(TradingMode.PerpetualLinear, x.Symbol, "USDC", x.Symbol, true))).ToArray();
 
-            ExchangeSymbolCache.UpdateSymbolInfo(_topicSpotId, EnvironmentName, null, symbolRegistrations);
+            ExchangeSymbolCache.UpdateSymbolInfo(_topicFuturesId, EnvironmentName, null, symbolRegistrations);
             return HttpResult.Ok(resultSymbols, SharedUtils.ApplySymbolFilter(resultData, request));
         }
 
