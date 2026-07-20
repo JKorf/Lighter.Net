@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace Lighter.Net.Converters
 {
+    [JsonSerializable(typeof(LighterTokens))]
     [JsonSerializable(typeof(LighterOrders))]
     [JsonSerializable(typeof(LighterStatus))]
     [JsonSerializable(typeof(LighterSystemConfig))]

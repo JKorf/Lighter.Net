@@ -76,6 +76,22 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #endregion
 
+        #region Get Tokens
+
+        /// <inheritdoc />
+        public async Task<HttpResult<LighterToken[]>> GetTokensAsync(
+            CancellationToken ct = default)
+        {
+            var request = _definitions.GetOrCreate(HttpMethod.Get, _baseClient.BaseAddress, "/api/v1/tokenlist", LighterExchange.RateLimiter.LighterRest, 300, false);
+            var result = await _baseClient.SendAsync<LighterTokens>(request, null, ct).ConfigureAwait(false);
+            if (!result.Success)
+                return HttpResult.Fail<LighterToken[]>(result);
+
+            return HttpResult.Ok(result, result.Data.Tokens);
+        }
+
+        #endregion
+
         #region Get Layer1 Basic Info
 
         /// <inheritdoc />
