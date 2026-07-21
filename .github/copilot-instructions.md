@@ -93,6 +93,8 @@ var ticker = await shared.GetSpotTickerAsync(
     new GetTickerRequest(new SharedSymbol(TradingMode.Spot, "ETH", "USDC")));
 ```
 
+Use `ExchangeData.GetTokensAsync()` for native token metadata. Shared `ISpotSymbolRestClient` and `IFuturesSymbolRestClient` discovery supports request filters and cached catalogs, and returns display names plus crypto/fiat/equity/commodity asset classifications.
+
 ## Dependency injection
 
 ```csharp

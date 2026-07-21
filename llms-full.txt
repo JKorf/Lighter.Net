@@ -4,9 +4,9 @@
 
 Lighter.Net is a strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. It is part of the CryptoExchange.Net ecosystem and uses the same result, shared API, logging, rate limiting, and socket patterns as the other JKorf exchange libraries.
 
-Current package version in this repository: 1.1.0.
+Current package version in this repository: 1.3.0.
 NuGet package id: JKorf.Lighter.Net.
-CryptoExchange.Net dependency: 12.0.1.
+CryptoExchange.Net dependency: 12.2.0.
 Target frameworks: netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
 Native AOT: supported on compatible .NET targets.
 
@@ -249,6 +249,7 @@ Common REST exchange-data tasks:
 Get platform status -> client.ExchangeApi.ExchangeData.GetStatusAsync()
 Get system config -> client.ExchangeApi.ExchangeData.GetSystemConfigAsync()
 Get supported symbols -> client.ExchangeApi.ExchangeData.GetSymbolsAsync(...)
+Get token metadata and categories -> client.ExchangeApi.ExchangeData.GetTokensAsync()
 Get layer 1 info -> client.ExchangeApi.ExchangeData.GetLayer1BasicInfoAsync()
 Get assets -> client.ExchangeApi.ExchangeData.GetAssetsAsync(...)
 Get order book -> client.ExchangeApi.ExchangeData.GetOrderBookAsync(symbol, limit)
@@ -476,6 +477,8 @@ Console.WriteLine(ticker.Data.LastPrice);
 
 Lighter also implements the shared REST `IFundingRateRestClient`. Use `GetFundingRateHistoryAsync` with a futures/perpetual `SharedSymbol` when exchange-agnostic code needs historical funding rates.
 
+`ISpotSymbolRestClient` and `IFuturesSymbolRestClient` expose cached symbol catalogs and honor `GetSymbolsRequest` filters. Their returned symbols include display names and asset metadata. Spot assets are crypto (with stablecoin quote metadata); perpetual base assets are classified from `GetTokensAsync()` metadata as crypto, fiat, equity, commodity, or other TradFi.
+
 Shared WebSocket subscriptions return an `UpdateSubscription` in `.Data`. For shared interface variables, unsubscribe through the concrete socket client:
 
 ```csharp
@@ -502,6 +505,8 @@ Do not call `tickerSocket.UnsubscribeAsync(...)` on `ITickerSocketClient`; that 
 ## Symbol And Market Handling
 
 Use the library's symbol helpers, exchange data, and shared API symbol discovery instead of hard-coding market metadata.
+
+Use `client.ExchangeApi.ExchangeData.GetTokensAsync()` when native Lighter code needs token names, logos, asset types, categories, market types, or mainnet availability.
 
 ```csharp
 var symbols = await client.ExchangeApi.ExchangeData.GetSymbolsAsync();

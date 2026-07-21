@@ -21,6 +21,7 @@ Use this map when generating C#/.NET code for Lighter with `JKorf.Lighter.Net`. 
 | System config | `restClient.ExchangeApi.ExchangeData.GetSystemConfigAsync()` |
 | Symbols | `restClient.ExchangeApi.ExchangeData.GetSymbolsAsync(...)` |
 | Assets | `restClient.ExchangeApi.ExchangeData.GetAssetsAsync(...)` |
+| Token metadata and categories | `restClient.ExchangeApi.ExchangeData.GetTokensAsync()` |
 | Order book | `restClient.ExchangeApi.ExchangeData.GetOrderBookAsync(symbol, limit)` |
 | Recent trades | `restClient.ExchangeApi.ExchangeData.GetRecentTradesAsync(symbol, limit)` |
 | Ticker / symbol details | `restClient.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(symbol)` |
@@ -71,6 +72,7 @@ Call `client.ExchangeApi.SharedClient.Discover()` before routing optional multi-
 | --- | --- |
 | Spot ticker | `ISpotTickerRestClient.GetSpotTickerAsync(...)` |
 | Futures ticker | `IFuturesTickerRestClient.GetFuturesTickerAsync(...)` |
+| Spot/futures symbol catalogs and filtered discovery | `ISpotSymbolRestClient`, `IFuturesSymbolRestClient` (includes display names and asset classifications) |
 | Order book | `IOrderBookRestClient.GetOrderBookAsync(...)` |
 | Recent trades | `IRecentTradeRestClient.GetRecentTradesAsync(...)` |
 | Balances | `IBalanceRestClient.GetBalancesAsync(...)` |

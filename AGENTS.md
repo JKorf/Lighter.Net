@@ -61,7 +61,7 @@ var price = ticker.Data.SpotSymbols[0].LastPrice;
 The client exposes a single exchange API branch:
 
 ```csharp
-restClient.ExchangeApi.ExchangeData // public market data, symbols, order books, trades, candles, funding, status
+restClient.ExchangeApi.ExchangeData // public market data, symbols, tokens, order books, trades, candles, funding, status
 restClient.ExchangeApi.Account      // accounts, limits, metadata, PnL, deposits, withdrawals, transfers, leverage, margin
 restClient.ExchangeApi.Trading      // place/edit/cancel orders, open/closed orders, user trades
 restClient.ExchangeApi.SharedClient // CryptoExchange.Net.SharedApis REST interfaces
@@ -163,7 +163,9 @@ var ticker = await lighterShared.GetSpotTickerAsync(new GetTickerRequest(symbol)
 if (!ticker.Success) { Console.WriteLine(ticker.Error); return; }
 ```
 
-Available shared REST interfaces include `ISpotTickerRestClient`, `IFuturesTickerRestClient`, `IBookTickerRestClient`, `IRecentTradeRestClient`, `IOrderBookRestClient`, `IAssetsRestClient`, `IDepositRestClient`, `IWithdrawalRestClient`, `IFeeRestClient`, `IBalanceRestClient`, `ISpotOrderRestClient`, `IFuturesOrderRestClient`, `IFundingRateRestClient`, and leverage/open-interest interfaces.
+Available shared REST interfaces include `ISpotSymbolRestClient`, `IFuturesSymbolRestClient`, `ISpotTickerRestClient`, `IFuturesTickerRestClient`, `IBookTickerRestClient`, `IRecentTradeRestClient`, `IOrderBookRestClient`, `IAssetsRestClient`, `IDepositRestClient`, `IWithdrawalRestClient`, `IFeeRestClient`, `IBalanceRestClient`, `ISpotOrderRestClient`, `IFuturesOrderRestClient`, `IFundingRateRestClient`, and leverage/open-interest interfaces.
+
+Shared spot and futures symbol discovery supports request filters and cached symbol catalogs. Returned symbols include display names and asset metadata; perpetual base assets are classified as crypto, fiat, equity, commodity, or other TradFi from Lighter token metadata.
 
 Available shared socket interfaces include `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, `ISpotOrderSocketClient`, `IFuturesOrderSocketClient`, `IUserTradeSocketClient`, and `IPositionSocketClient`.
 
@@ -227,7 +229,7 @@ var custom = new LighterRestClient(o =>
 
 ## When the user wants specific Lighter features
 
-- Public status/config/assets/symbols: `restClient.ExchangeApi.ExchangeData`
+- Public status/config/assets/symbols/tokens: `restClient.ExchangeApi.ExchangeData`; use `GetTokensAsync()` for token metadata and asset categories
 - Order book and recent trades: `restClient.ExchangeApi.ExchangeData.GetOrderBookAsync`, `GetRecentTradesAsync`
 - Ticker/symbol details: `restClient.ExchangeApi.ExchangeData.GetSymbolDetailsAsync`
 - Candles and mark-price candles: `GetKlinesAsync`, `GetMarkPriceKlinesAsync`
