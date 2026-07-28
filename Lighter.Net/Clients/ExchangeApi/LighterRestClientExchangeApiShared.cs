@@ -80,7 +80,15 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result,
                 ExchangeHelpers.ApplyFilter(result.Data.Klines, x => x.OpenTime, request.StartTime, request.EndTime, direction)
                     .Select(x =>
-                        new SharedKline(request.Symbol, symbol, x.OpenTime, x.ClosePrice, x.HighPrice, x.LowPrice, x.OpenPrice, x.Volume))
+                        new SharedKline(
+                            request.Symbol,
+                            symbol,
+                            x.OpenTime,
+                            x.ClosePrice,
+                            x.HighPrice,
+                            x.LowPrice,
+                            x.OpenPrice,
+                            new SharedOrderQuantity(x.Volume, x.QuoteVolume)))
                     .ToArray(), nextPageRequest);
 
         }
@@ -321,10 +329,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                     result.Data.SpotSymbols[0].LastPrice,
                     result.Data.SpotSymbols[0].HighPrice,
                     result.Data.SpotSymbols[0].LowPrice,
-                    result.Data.SpotSymbols[0].Volume,
+                    new SharedOrderQuantity(result.Data.SpotSymbols[0].Volume, result.Data.SpotSymbols[0].QuoteVolume),
                     result.Data.SpotSymbols[0].PriceChangePercentage)
             {
-                QuoteVolume = result.Data.SpotSymbols[0].QuoteVolume
             });
 
         }
@@ -347,10 +354,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         x.LastPrice,
                         x.HighPrice,
                         x.LowPrice,
-                        x.Volume,
+                        new SharedOrderQuantity(x.Volume, x.QuoteVolume),
                         x.PriceChangePercentage)
                     {
-                        QuoteVolume = x.QuoteVolume
                     }).ToArray());
 
         }
@@ -376,7 +382,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                     result.Data.PerpSymbols[0].LastPrice,
                     result.Data.PerpSymbols[0].HighPrice,
                     result.Data.PerpSymbols[0].LowPrice,
-                    result.Data.PerpSymbols[0].Volume,
+                    new SharedOrderQuantity(result.Data.PerpSymbols[0].Volume, result.Data.PerpSymbols[0].QuoteVolume),
                     result.Data.PerpSymbols[0].PriceChangePercentage)
             {
             });
@@ -401,7 +407,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                         x.LastPrice,
                         x.HighPrice,
                         x.LowPrice,
-                        x.Volume,
+                        new SharedOrderQuantity(x.Volume, x.QuoteVolume),
                         x.PriceChangePercentage)
                     {
                     }).ToArray());
@@ -457,7 +463,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             // Return
             return HttpResult.Ok(result, result.Data!.Select(x =>
-                new SharedTrade(request.Symbol, symbol, x.Quantity, x.Price, x.Timestamp)
+                new SharedTrade(request.Symbol, symbol, new SharedOrderQuantity(x.Quantity), x.Price, x.Timestamp)
                 {
                     Side = x.IsMakerAsk ? SharedOrderSide.Buy : SharedOrderSide.Sell,
                 }).ToArray());

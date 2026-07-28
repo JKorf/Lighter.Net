@@ -43,10 +43,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         x.LastPrice,
                         x.HighPrice,
                         x.LowPrice,
-                        x.Volume,
+                        new SharedOrderQuantity(x.Volume, x.QuoteVolume),
                         x.PriceChangePercentage)
                     {
-                        QuoteVolume = x.QuoteVolume
                     }).ToArray())), ct).ConfigureAwait(false);
                 return result;
             }
@@ -60,10 +59,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         x.LastPrice,
                         x.HighPrice,
                         x.LowPrice,
-                        x.Volume,
+                        new SharedOrderQuantity(x.Volume, x.QuoteVolume),
                         x.PriceChangePercentage)
                     {
-                        QuoteVolume = x.QuoteVolume
                     }).ToArray())), ct).ConfigureAwait(false);
                 return result;
             }
@@ -89,10 +87,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         update.Data.Ticker.LastPrice,
                         update.Data.Ticker.HighPrice,
                         update.Data.Ticker.LowPrice,
-                        update.Data.Ticker.Volume,
+                        new SharedOrderQuantity(update.Data.Ticker.Volume, update.Data.Ticker.QuoteVolume),
                         update.Data.Ticker.PriceChangePercentage)
                 {
-                    QuoteVolume = update.Data.Ticker.QuoteVolume
                 })), ct).ConfigureAwait(false);
                 return result;
             }
@@ -105,10 +102,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         update.Data.Ticker.LastPrice,
                         update.Data.Ticker.HighPrice,
                         update.Data.Ticker.LowPrice,
-                        update.Data.Ticker.Volume,
+                        new SharedOrderQuantity(update.Data.Ticker.Volume, update.Data.Ticker.QuoteVolume),
                         update.Data.Ticker.PriceChangePercentage)
                     {
-                        QuoteVolume = update.Data.Ticker.QuoteVolume
                     })), ct).ConfigureAwait(false);
                 return result;
             }
@@ -135,7 +131,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                     new SharedTrade(
                         request.Symbol,
                         symbol,
-                        x.Quantity,
+                        new SharedOrderQuantity(x.Quantity),
                         x.Price,
                         x.Timestamp)
                     {
@@ -195,7 +191,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                             kline.HighPrice,
                             kline.LowPrice,
                             kline.OpenPrice,
-                            kline.Volume)));
+                            new SharedOrderQuantity(kline.Volume, kline.QuoteVolume))));
                 }
             }, ct).ConfigureAwait(false);
 

@@ -80,6 +80,7 @@ namespace Lighter.Net
                 symbol,
                 limit,
                 period,
+                TradeQuantityType.BaseAsset,
                 exchangeParameters
                 );
         }
