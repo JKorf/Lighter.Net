@@ -105,5 +105,10 @@ public record LighterAsset
     /// </summary>
     [JsonPropertyName("user_supply_cap")]
     public decimal UserSupplyCap { get; set; }
+    /// <summary>
+    /// ["<c>multiplier</c>"] Multiplier
+    /// </summary>
+    [JsonPropertyName("multiplier")]
+    public decimal Multiplier { get; set; }
 }
 
