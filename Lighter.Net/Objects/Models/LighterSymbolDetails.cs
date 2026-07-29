@@ -216,6 +216,31 @@ public record LighterSymbolPerpDetails
     /// </summary>
     [JsonPropertyName("created_at")]
     public DateTime CreateTime { get; set; }
+    /// <summary>
+    /// ["<c>multiplier</c>"] Contract multiplier
+    /// </summary>
+    [JsonPropertyName("multiplier")]
+    public decimal Multiplier { get; set; }
+    /// <summary>
+    /// ["<c>funding_premium_multiplier</c>"] Funding premium multiplier
+    /// </summary>
+    [JsonPropertyName("funding_premium_multiplier")]
+    public decimal FundingPremiumMultiplier { get; set; }
+    /// <summary>
+    /// ["<c>market_flags</c>"] Market flags
+    /// </summary>
+    [JsonPropertyName("market_flags")]
+    public int? MarketFlags { get; set; }
+    /// <summary>
+    /// ["<c>mark_price</c>"] Mark price
+    /// </summary>
+    [JsonPropertyName("mark_price")]
+    public decimal MarkPrice { get; set; }
+    /// <summary>
+    /// ["<c>index_price</c>"] Index price
+    /// </summary>
+    [JsonPropertyName("index_price")]
+    public decimal IndexPrice { get; set; }
 }
 
 /// <summary>
@@ -405,5 +430,10 @@ public record LighterSymbolSpotDetails
     /// </summary>
     [JsonPropertyName("created_at")]
     public DateTime CreateTime { get; set; }
+    /// <summary>
+    /// ["<c>multiplier</c>"] Contract multiplier
+    /// </summary>
+    [JsonPropertyName("multiplier")]
+    public decimal Multiplier { get; set; }
 }
 

@@ -230,6 +230,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 PriceDecimals = s.SupportedPriceDecimals,
                 QuantityDecimals = s.SupportedQuantityDecimals,
                 DisplayName = s.Symbol,
+                ContractSize = s.Multiplier,
                 QuoteAssetType = SharedAssetType.Crypto,
                 QuoteAssetSubType = SharedAssetSubType.StableCoin
             };
@@ -385,6 +386,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                     new SharedOrderQuantity(result.Data.PerpSymbols[0].Volume, result.Data.PerpSymbols[0].QuoteVolume),
                     result.Data.PerpSymbols[0].PriceChangePercentage)
             {
+                MarkPrice = result.Data.PerpSymbols[0].MarkPrice,
+                IndexPrice = result.Data.PerpSymbols[0].IndexPrice,
             });
 
         }
@@ -410,6 +413,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                         new SharedOrderQuantity(x.Volume, x.QuoteVolume),
                         x.PriceChangePercentage)
                     {
+                        MarkPrice = x.MarkPrice,
+                        IndexPrice = x.IndexPrice,
                     }).ToArray());
 
         }

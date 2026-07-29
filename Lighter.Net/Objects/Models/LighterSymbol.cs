@@ -111,5 +111,10 @@ public record LighterSymbol
     /// </summary>
     [JsonPropertyName("created_at")]
     public DateTime CreateTime { get; set; }
+    /// <summary>
+    /// ["<c>multiplier</c>"] Contract multiplier
+    /// </summary>
+    [JsonPropertyName("multiplier")]
+    public decimal Multiplier { get; set; }
 }
 
