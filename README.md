@@ -2,6 +2,8 @@
 
 [![.NET](https://img.shields.io/github/actions/workflow/status/JKorf/Lighter.Net/dotnet.yml?style=for-the-badge)](https://github.com/JKorf/Lighter.Net/actions/workflows/dotnet.yml) ![License](https://img.shields.io/github/license/JKorf/Lighter.Net?style=for-the-badge)
 
+[![Docs](https://img.shields.io/badge/Docs-Lighter.Net-1b7f50?style=for-the-badge)](https://cryptoexchange.jkorf.dev/docs/exchange-clients?library=Lighter.Net)
+
 Lighter.Net is a client library for accessing the [Lighter DEX REST and Websocket API](https://apidocs.lighter.xyz/docs/get-started). 
 
 ## Features
@@ -16,6 +18,17 @@ Lighter.Net is a client library for accessing the [Lighter DEX REST and Websocke
 * Support for different environments
 * Easy integration with other exchange clients based on the CryptoExchange.Net base library
 * Native AOT support
+
+## Documentation
+
+The [Lighter.Net documentation](https://cryptoexchange.jkorf.dev/docs/exchange-clients?library=Lighter.Net) is the main resource for installing, configuring, and using the library.
+
+| Resource | Description |
+|--|--|
+| [Client guide](https://cryptoexchange.jkorf.dev/docs/exchange-clients?library=Lighter.Net) | Installation, REST and WebSocket clients, authentication, dependency injection, error handling, and advanced features |
+| [Examples](https://cryptoexchange.jkorf.dev/docs/exchange-clients/examples?library=Lighter.Net) | Common REST and WebSocket operations |
+| [API reference](https://cryptoexchange.jkorf.dev/docs/exchange-clients/reference?library=Lighter.Net) | Client interfaces, methods, and properties |
+| [Shared API guide](https://cryptoexchange.jkorf.dev/docs/shared-api) | Common interfaces and models for working with multiple exchanges |
 
 ## Supported Frameworks
 The library is targeting both `.NET Standard 2.0` and `.NET Standard 2.1` for optimal compatibility, as well as the latest dotnet versions to use the latest framework features.
@@ -87,7 +100,7 @@ var tickerSubscriptionResult = socketClient.ExchangeApi.ExchangeData.SubscribeTo
 });
 ```
 
-For information on the clients, dependency injection, response processing and more see the [documentation](https://cryptoexchange.jkorf.dev/client-libs/getting-started), or have a look at the examples [here](https://github.com/JKorf/Lighter.Net/tree/main/Examples) or [here](https://github.com/JKorf/CryptoExchange.Net/tree/master/Examples).
+For more examples and explanations, continue with the [Lighter.Net documentation](https://cryptoexchange.jkorf.dev/docs/exchange-clients?library=Lighter.Net) or browse the [compilable repository examples](https://github.com/JKorf/Lighter.Net/tree/main/Examples).
 
 **NOTE**  
 Lighter.Net uses the Integrator Code mechanism for Lighter, which means that an additional 1bps / 0.01% fee is charged on top of orders placed with the library to fund development. This is entirely optional and can be disabled in the client options by setting `IntegratorFeePercentage` to `0` or `null` in the client options.
@@ -108,7 +121,7 @@ See [cryptoexchange-skills-hub](https://github.com/JKorf/cryptoexchange-skills-h
 
 ## Shared / unified API
 
-The CryptoExchange.Net [Shared APIs](https://cryptoexchange.jkorf.dev/client-libs/shared) provide exchange-agnostic, unified interfaces for common operations such as retrieving tickers, order books and balances, placing orders, and subscribing to market updates.
+The CryptoExchange.Net [Shared APIs](https://cryptoexchange.jkorf.dev/docs/shared-api) provide exchange-agnostic, unified interfaces for common operations such as retrieving tickers, order books and balances, placing orders, and subscribing to market updates.
 
 This allows the same application code to work with different exchange libraries. The supported Lighter API surfaces expose their shared functionality through a `SharedClient` property. Because support differs between exchanges and API surfaces, call `Discover()` to inspect the available trading modes, environments, endpoints, and subscriptions at runtime.
 
@@ -155,7 +168,7 @@ The request and response models belong to `CryptoExchange.Net.SharedApis`, so th
 ## CryptoExchange.Net
 Lighter.Net is based on the [CryptoExchange.Net](https://github.com/JKorf/CryptoExchange.Net) base library. Other exchange API implementations based on the CryptoExchange.Net base library are available and follow the same logic.
 
-CryptoExchange.Net also allows for [easy access to different exchange API's](https://jkorf.github.io/CryptoExchange.Net#idocs_shared).
+CryptoExchange.Net also provides [shared access to different exchange APIs](https://cryptoexchange.jkorf.dev/docs/shared-api).
 
 |Exchange|Repository|Nuget|
 |--|--|--|
