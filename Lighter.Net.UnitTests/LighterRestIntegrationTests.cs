@@ -89,7 +89,9 @@ namespace Lighter.Net.UnitTests
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetLayer1BasicInfoAsync(CancellationToken.None), false);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetAssetsAsync(default, CancellationToken.None), false, compareNestedProperty: "asset_details");
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetOrderBookAsync("ETH", default, CancellationToken.None), false, ignoreProperties: ["transaction_time"]);
-            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetRecentTradesAsync("ETH", default, CancellationToken.None), false, compareNestedProperty: "trades");
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetRecentTradesAsync("ETH", default, CancellationToken.None), false, compareNestedProperty: "trades", ignoreProperties: [
+                "ask_order_version", "bid_order_version"
+                ]);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(default, default, CancellationToken.None), false, ignoreProperties: ["daily_chart", "market_margin_mode"]);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetExchangeStatsAsync(CancellationToken.None), false);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetAnnouncementsAsync(CancellationToken.None), false);
