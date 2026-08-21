@@ -167,7 +167,9 @@ Available shared REST interfaces include `ISpotSymbolRestClient`, `IFuturesSymbo
 
 Shared spot and futures symbol discovery supports request filters and cached symbol catalogs. Returned symbols include display names and asset metadata; perpetual base assets are classified as crypto, fiat, equity, commodity, or other TradFi from Lighter token metadata.
 
-Available shared socket interfaces include `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, `ISpotOrderSocketClient`, `IFuturesOrderSocketClient`, `IUserTradeSocketClient`, and `IPositionSocketClient`.
+Available shared socket interfaces include `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, `ISpotOrderSocketClient`, `IFuturesOrderSocketClient`, `IUserTradeSocketClient`, `IPositionSocketClient`, `ISpotOrderManagementSocketClient`, and `IFuturesOrderManagementSocketClient`.
+
+Shared socket order management supports placing and cancelling spot and futures orders. Shared place-order calls and REST `ClosePositionAsync` return a successful `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates instead of treating the result as an exchange order ID. For shared market orders, supply `Price` as the reference price used to calculate the 5% slippage bound.
 
 ## Dependency Injection
 

@@ -4,9 +4,9 @@
 
 Lighter.Net is a strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. It is part of the CryptoExchange.Net ecosystem and uses the same result, shared API, logging, rate limiting, and socket patterns as the other JKorf exchange libraries.
 
-Current package version in this repository: 1.4.0.
+Current package version in this repository: 1.5.0.
 NuGet package id: JKorf.Lighter.Net.
-CryptoExchange.Net dependency: 12.2.0.
+CryptoExchange.Net dependency: 12.5.0.
 Target frameworks: netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
 Native AOT: supported on compatible .NET targets.
 
@@ -478,6 +478,10 @@ Console.WriteLine(ticker.Data.LastPrice);
 Lighter also implements the shared REST `IFundingRateRestClient`. Use `GetFundingRateHistoryAsync` with a futures/perpetual `SharedSymbol` when exchange-agnostic code needs historical funding rates.
 
 `ISpotSymbolRestClient` and `IFuturesSymbolRestClient` expose cached symbol catalogs and honor `GetSymbolsRequest` filters. Their returned symbols include display names and asset metadata. Spot assets are crypto (with stablecoin quote metadata); perpetual base assets are classified from `GetTokensAsync()` metadata as crypto, fiat, equity, commodity, or other TradFi.
+
+The shared socket client implements `ISpotOrderManagementSocketClient` and `IFuturesOrderManagementSocketClient` for placing and cancelling orders. Both support limit, market, and limit-maker orders, base-asset quantities, and numeric client order IDs. For market orders, provide `Price` as the reference price from which Lighter.Net calculates a 5% slippage bound.
+
+Successful shared `PlaceSpotOrderAsync` and `PlaceFuturesOrderAsync` calls, over REST or socket, return a `SharedId` whose `Id` is null because the transaction response does not provide an exchange order ID. REST `ClosePositionAsync` behaves the same way. Retain the submitted client order ID or reconcile through order queries/updates; do not use the returned `SharedId.Id` as an order ID. Shared socket cancellation returns the requested order ID.
 
 Shared WebSocket subscriptions return an `UpdateSubscription` in `.Data`. For shared interface variables, unsubscribe through the concrete socket client:
 

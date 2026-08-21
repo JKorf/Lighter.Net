@@ -252,6 +252,14 @@ Make a one time donation in a crypto currency of your choice. If you prefer to d
 Alternatively, sponsor me on Github using [Github Sponsors](https://github.com/sponsors/JKorf). 
 
 ## Release notes
+* Version 1.5.0 - 21 Aug 2026
+    * Updated to CryptoExchange.Net v12.5.0
+    * Added Shared ISpotOrderManagementSocketClient, IFuturesOrderManagementSocketClient implementations
+    * Added MakerFeePercentage, TakerFeePercentage to SharedSpotSymbol mapping
+    * Added MakerFeePercentage, TakerFeePercentage to SharedFuturesSymbol mapping
+    * Added PricedOnly value to EnabledStatus Enum
+    * Updated Shared PlaceSpotOrderAsync, PlaceFuturesOrderAsync and ClosePositionAsync to return null value for SharedId instead of the client order id
+
 * Version 1.4.0 - 29 Jul 2026
     * Updated CryptoExchange.Net to version 12.4.0
     * Added calculation of AveragePrice on Shared order models if data is available and AveragePrice is not set

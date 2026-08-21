@@ -95,6 +95,8 @@ var ticker = await shared.GetSpotTickerAsync(
 
 Use `ExchangeData.GetTokensAsync()` for native token metadata. Shared `ISpotSymbolRestClient` and `IFuturesSymbolRestClient` discovery supports request filters and cached catalogs, and returns display names plus crypto/fiat/equity/commodity asset classifications.
 
+Shared sockets implement `ISpotOrderManagementSocketClient` and `IFuturesOrderManagementSocketClient` for spot/futures placement and cancellation. Successful shared place-order calls and REST `ClosePositionAsync` return `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates. For shared market orders, `Price` supplies the reference for the 5% slippage bound.
+
 ## Dependency injection
 
 ```csharp

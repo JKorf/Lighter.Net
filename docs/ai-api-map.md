@@ -77,8 +77,9 @@ Call `client.ExchangeApi.SharedClient.Discover()` before routing optional multi-
 | Recent trades | `IRecentTradeRestClient.GetRecentTradesAsync(...)` |
 | Balances | `IBalanceRestClient.GetBalancesAsync(...)` |
 | Spot/futures orders | `ISpotOrderRestClient`, `IFuturesOrderRestClient` |
+| Spot/futures socket order management | `ISpotOrderManagementSocketClient`, `IFuturesOrderManagementSocketClient` |
 | Funding-rate history | `IFundingRateRestClient.GetFundingRateHistoryAsync(...)` |
-| Shared sockets | `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, order/user-trade/position socket interfaces |
+| Shared subscriptions | `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, order/user-trade/position socket interfaces |
 
 ## Result Rules
 
