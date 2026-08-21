@@ -20,4 +20,9 @@ public enum EnabledStatus
     /// </summary>
     [Map("disabled")]
     Disabled,
+    /// <summary>
+    /// ["<c>priced_only</c>"] Priced Only
+    /// </summary>
+    [Map("priced_only")]
+    PricedOnly,
 }

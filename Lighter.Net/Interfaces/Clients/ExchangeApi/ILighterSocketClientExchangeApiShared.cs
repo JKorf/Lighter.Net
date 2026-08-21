@@ -15,7 +15,9 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         ISpotOrderSocketClient,
         IFuturesOrderSocketClient,
         IUserTradeSocketClient,
-        IPositionSocketClient
+        IPositionSocketClient,
+        ISpotOrderManagementSocketClient,
+        IFuturesOrderManagementSocketClient
     {
     }
 }

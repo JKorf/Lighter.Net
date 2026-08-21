@@ -142,7 +142,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                 DisplayName = baseAsset.Symbol,
                 BaseAssetType = SharedAssetType.Crypto,
                 QuoteAssetType = SharedAssetType.Crypto,
-                QuoteAssetSubType = SharedAssetSubType.StableCoin
+                QuoteAssetSubType = SharedAssetSubType.StableCoin,
+                TakerFeePercentage = s.TakerFee,
+                MakerFeePercentage = s.MakerFee
             };
 
             return result;
@@ -232,7 +234,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                 DisplayName = s.Symbol,
                 ContractSize = s.Multiplier,
                 QuoteAssetType = SharedAssetType.Crypto,
-                QuoteAssetSubType = SharedAssetSubType.StableCoin
+                QuoteAssetSubType = SharedAssetSubType.StableCoin,
+                TakerFeePercentage = s.TakerFee,
+                MakerFeePercentage = s.MakerFee
             };
 
             var compareName = s.Symbol.StartsWith("1000") ? "k" + s.Symbol.Substring(4) : s.Symbol;
@@ -440,9 +444,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                 request.Symbol,
                 symbol,
                 resultTicker.Data.Asks[0].Price,
-                resultTicker.Data.Asks[0].Quantity,
+                new SharedOrderQuantity(resultTicker.Data.Asks[0].Quantity),
                 resultTicker.Data.Bids[0].Price,
-                resultTicker.Data.Bids[0].Quantity));
+                new SharedOrderQuantity(resultTicker.Data.Bids[0].Quantity)));
 
         }
 
@@ -499,6 +503,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return HttpResult.Ok(result, 
                 new SharedOrderBook(
+                    SharedQuantityType.BaseAsset,
                     asks.Select(x => new CombinedEntry { Price = x.Key, Quantity = x.Sum(y => y.Quantity) }).ToArray(),
                     bids.Select(x => new CombinedEntry { Price = x.Key, Quantity = x.Sum(y => y.Quantity) }).ToArray()
                     ));
@@ -802,7 +807,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!result.Success)
                 return HttpResult.Fail<SharedId>(result);
 
-            return HttpResult.Ok(result, new SharedId(cid.ToString()));
+            return HttpResult.Ok(result, new SharedId(null));
 
         }
 
@@ -974,7 +979,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 request.OrderId,
                 x.TradeId.ToString(),
                 x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
-                x.Quantity,
+                new SharedOrderQuantity(x.Quantity),
                 x.Price,
                 x.Timestamp)
             {
@@ -1026,7 +1031,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                         (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                         x.TradeId.ToString(),
                         x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
-                        x.Quantity,
+                        new SharedOrderQuantity(x.Quantity),
                         x.Price,
                         x.Timestamp)
                     {
@@ -1234,7 +1239,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!result.Success)
                 return HttpResult.Fail<SharedId>(result);
 
-            return HttpResult.Ok(result, new SharedId(cid.ToString()));
+            return HttpResult.Ok(result, new SharedId(null));
 
         }
 
@@ -1406,7 +1411,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 request.OrderId,
                 x.TradeId.ToString(),
                 x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
-                x.Quantity,
+                new SharedOrderQuantity(x.Quantity),
                 x.Price,
                 x.Timestamp)
             {
@@ -1458,7 +1463,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                         (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                         x.TradeId.ToString(),
                         x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
-                        x.Quantity,
+                        new SharedOrderQuantity(x.Quantity),
                         x.Price,
                         x.Timestamp)
                     {
@@ -1504,7 +1509,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 new SharedPosition(
                     ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, x.Symbol),
                     x.Symbol,
-                    Math.Abs(x.Position),
+                    new SharedOrderQuantity(Math.Abs(x.Position)),
                     null)
                 {
                     AverageOpenPrice = x.AverageEntryPrice,
@@ -1550,7 +1555,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!result.Success)
                 return HttpResult.Fail<SharedId>(result);
 
-            return HttpResult.Ok(result, new SharedId(cid.ToString()));
+            return HttpResult.Ok(result, new SharedId(null));
 
         }
 
@@ -1698,7 +1703,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (result.Data.PerpSymbols.Length == 0)
                 return HttpResult.Fail<SharedOpenInterest>(result, new ServerError(ErrorType.UnknownSymbol, "Symbol not found"));
 
-            return HttpResult.Ok(result, new SharedOpenInterest(result.Data.PerpSymbols[0].OpenInterest));
+            return HttpResult.Ok(result, new SharedOpenInterest(new SharedOrderQuantity(result.Data.PerpSymbols[0].OpenInterest)));
 
         }
 

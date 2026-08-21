@@ -1,5 +1,6 @@
 using CryptoExchange.Net;
 using CryptoExchange.Net.Objects;
+using CryptoExchange.Net.Objects.Errors;
 using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.SharedApis;
 using Lighter.Net.Enums;
@@ -159,10 +160,10 @@ namespace Lighter.Net.Clients.ExchangeApi
                 new SharedBookTicker(
                     request.Symbol,
                     update.Data.BookTicker.Symbol, 
-                    update.Data.BookTicker.Ask.Price, 
-                    update.Data.BookTicker.Ask.Quantity, 
-                    update.Data.BookTicker.Bid.Price, 
-                    update.Data.BookTicker.Bid.Quantity))), ct).ConfigureAwait(false);
+                    update.Data.BookTicker.Ask.Price,
+                    new SharedOrderQuantity(update.Data.BookTicker.Ask.Quantity), 
+                    update.Data.BookTicker.Bid.Price,
+                    new SharedOrderQuantity(update.Data.BookTicker.Bid.Quantity)))), ct).ConfigureAwait(false);
 
             return result;
         }
@@ -405,7 +406,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                                 (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                                 x.TradeId.ToString(),
                                 x.AskAccountId == ApiCredentials.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
-                                x.Quantity,
+                                new SharedOrderQuantity(x.Quantity),
                                 x.Price,
                                 x.Timestamp)
                         {
@@ -433,8 +434,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 update => handler(update.ToType(update.Data.Positions.Values.Select(x => 
                     new SharedPosition(
                         ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, x.Symbol), 
-                        x.Symbol, 
-                        Math.Abs(x.Position), 
+                        x.Symbol,
+                        new SharedOrderQuantity(Math.Abs(x.Position)), 
                         null)
                     {
                         AverageOpenPrice = x.AverageEntryPrice,
@@ -445,6 +446,181 @@ namespace Lighter.Net.Clients.ExchangeApi
                 ct: ct).ConfigureAwait(false);
 
             return result;
+        }
+
+        #endregion
+
+        #region Spot Order Client
+
+        SharedFeeDeductionType ISpotOrderManagementSocketClient.SpotFeeDeductionType => SharedFeeDeductionType.DeductFromOutput;
+        SharedFeeAssetType ISpotOrderManagementSocketClient.SpotFeeAssetType => SharedFeeAssetType.OutputAsset;
+        SharedOrderType[] ISpotOrderManagementSocketClient.SpotSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
+        SharedTimeInForce[] ISpotOrderManagementSocketClient.SpotSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
+        SharedQuantitySupport ISpotOrderManagementSocketClient.SpotSupportedOrderQuantity { get; } = new SharedQuantitySupport(
+                SharedQuantityType.BaseAsset,
+                SharedQuantityType.BaseAsset,
+                SharedQuantityType.BaseAsset,
+                SharedQuantityType.BaseAsset);
+
+        string ISpotOrderManagementSocketClient.GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
+
+        PlaceSpotOrderSocketOptions ISpotOrderManagementSocketClient.PlaceSpotOrderOptions { get; } = new PlaceSpotOrderSocketOptions(_exchangeName)
+        {
+            RequiredOptionalParameters = new List<ParameterDescription>
+            {
+                new ParameterDescription(nameof(PlaceSpotOrderRequest.Price), typeof(decimal), "Price for the order. For market orders this should be the current symbol price to calculate max slippage", 21.5m)
+            },
+        };
+        async Task<QueryResult<SharedId>> ISpotOrderManagementSocketClient.PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
+        {
+            var validationError = SharedClient.PlaceSpotOrderOptions.ValidateRequest(request, this);
+            if (validationError != null)
+                return QueryResult.Fail<SharedId>(Exchange, validationError);
+
+            long cid;
+            if (request.ClientOrderId != null)
+            {
+                if (!long.TryParse(request.ClientOrderId, out var parsedCid))
+                    return QueryResult.Fail<SharedId>(_exchangeName, new ServerError(ErrorType.InvalidParameter, "Client order id invalid; should be a number string"));
+
+                cid = parsedCid;
+            }
+            else
+            {
+                cid = long.Parse(((ISpotOrderManagementSocketClient)SharedClient).GenerateClientOrderId());
+            }
+
+            var result = await Trading.PlaceOrderAsync(
+                request.Symbol!.GetSymbol(FormatSymbol),
+                request.Side == SharedOrderSide.Buy ? Enums.OrderSide.Buy : Enums.OrderSide.Sell,
+                request.OrderType == SharedOrderType.Limit ? OrderType.Limit : OrderType.Market,
+                quantity: request.Quantity?.QuantityInBaseAsset ?? 0,
+                price: request.OrderType == SharedOrderType.Market ? GetSlippagePrice(request) : request.Price!.Value,
+                timeInForce: GetTimeInForce(request.TimeInForce, request.OrderType),
+                clientOrderIndex: cid,
+                ct: ct).ConfigureAwait(false);
+
+            if (!result.Success)
+                return QueryResult.Fail<SharedId>(result);
+
+            return QueryResult.Ok(result, new SharedId(null));
+
+        }
+
+        private Enums.TimeInForce GetTimeInForce(SharedTimeInForce? tif, SharedOrderType type)
+        {
+            if (tif == SharedTimeInForce.ImmediateOrCancel) return TimeInForce.ImmediateOrCancel;
+            if (tif == SharedTimeInForce.GoodTillCanceled) return TimeInForce.GoodTillTime;
+            if (type == SharedOrderType.LimitMaker) return TimeInForce.PostOnly;
+            if (type == SharedOrderType.Market) return TimeInForce.ImmediateOrCancel;
+
+            return TimeInForce.GoodTillTime;
+        }
+
+        private decimal GetSlippagePrice(PlaceSpotOrderRequest request)
+        {
+            // Calculate 5% max slippage
+            if (request.Side == SharedOrderSide.Buy)
+                return request.Price!.Value * 1.05m;
+
+            return request.Price!.Value * 0.95m;
+        }
+        CancelSpotOrderSocketOptions ISpotOrderManagementSocketClient.CancelSpotOrderOptions { get; }
+            = new CancelSpotOrderSocketOptions(_exchangeName, true);
+        async Task<QueryResult<SharedId>> ISpotOrderManagementSocketClient.CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
+        {
+            var validationError = SharedClient.CancelSpotOrderOptions.ValidateRequest(request, this);
+            if (validationError != null)
+                return QueryResult.Fail<SharedId>(Exchange, validationError);
+
+            if (!long.TryParse(request.OrderId, out var orderId))
+                return QueryResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
+
+            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
+            if (!order.Success)
+                return QueryResult.Fail<SharedId>(order);
+
+            return QueryResult.Ok(order, new SharedId(request.OrderId));
+        }
+        #endregion
+
+        #region Futures Order Client
+
+        SharedFeeDeductionType IFuturesOrderManagementSocketClient.FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
+        SharedFeeAssetType IFuturesOrderManagementSocketClient.FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
+
+        SharedOrderType[] IFuturesOrderManagementSocketClient.FuturesSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
+        SharedTimeInForce[] IFuturesOrderManagementSocketClient.FuturesSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
+        SharedQuantitySupport IFuturesOrderManagementSocketClient.FuturesSupportedOrderQuantity { get; } = new SharedQuantitySupport(
+                SharedQuantityType.BaseAsset,
+                SharedQuantityType.BaseAsset,
+                SharedQuantityType.BaseAsset,
+                SharedQuantityType.BaseAsset);
+
+        string IFuturesOrderManagementSocketClient.GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
+
+        PlaceFuturesOrderSocketOptions IFuturesOrderManagementSocketClient.PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderSocketOptions(_exchangeName, false);
+        async Task<QueryResult<SharedId>> IFuturesOrderManagementSocketClient.PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
+        {
+            var validationError = SharedClient.PlaceFuturesOrderOptions.ValidateRequest(request, this);
+            if (validationError != null)
+                return QueryResult.Fail<SharedId>(Exchange, validationError);
+
+            long cid;
+            if (request.ClientOrderId != null)
+            {
+                if (!long.TryParse(request.ClientOrderId, out var parsedCid))
+                    return QueryResult.Fail<SharedId>(_exchangeName, new ServerError(ErrorType.InvalidParameter, "Client order id invalid; should be a number string"));
+
+                cid = parsedCid;
+            }
+            else
+            {
+                cid = long.Parse(((IFuturesOrderManagementSocketClient)SharedClient).GenerateClientOrderId());
+            }
+
+            var result = await Trading.PlaceOrderAsync(
+                request.Symbol!.GetSymbol(FormatSymbol),
+                request.Side == SharedOrderSide.Buy ? Enums.OrderSide.Buy : Enums.OrderSide.Sell,
+                request.OrderType == SharedOrderType.Limit ? OrderType.Limit : OrderType.Market,
+                quantity: request.Quantity?.QuantityInBaseAsset ?? 0,
+                price: request.OrderType == SharedOrderType.Market ? GetSlippagePrice(request) : request.Price!.Value,
+                timeInForce: GetTimeInForce(request.TimeInForce, request.OrderType),
+                clientOrderIndex: cid,
+                ct: ct).ConfigureAwait(false);
+
+            if (!result.Success)
+                return QueryResult.Fail<SharedId>(result);
+
+            return QueryResult.Ok(result, new SharedId(null));
+
+        }
+
+        private decimal GetSlippagePrice(PlaceFuturesOrderRequest request)
+        {
+            // Calculate 5% max slippage
+            if (request.Side == SharedOrderSide.Buy)
+                return request.Price!.Value * 1.05m;
+
+            return request.Price!.Value * 0.95m;
+        }
+
+        CancelFuturesOrderSocketOptions IFuturesOrderManagementSocketClient.CancelFuturesOrderOptions { get; } = new CancelFuturesOrderSocketOptions(_exchangeName, true);
+        async Task<QueryResult<SharedId>> IFuturesOrderManagementSocketClient.CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
+        {
+            var validationError = SharedClient.CancelFuturesOrderOptions.ValidateRequest(request, this);
+            if (validationError != null)
+                return QueryResult.Fail<SharedId>(Exchange, validationError);
+
+            if (!long.TryParse(request.OrderId, out var orderId))
+                return QueryResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
+
+            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
+            if (!order.Success)
+                return QueryResult.Fail<SharedId>(order);
+
+            return QueryResult.Ok(order, new SharedId(request.OrderId));
+
         }
 
         #endregion
