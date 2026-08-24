@@ -1,6 +1,7 @@
 # ![Lighter.Net](https://raw.githubusercontent.com/JKorf/Lighter.Net/main/Lighter.Net/Icon/icon.png) Lighter.Net  
 
 [![.NET](https://img.shields.io/github/actions/workflow/status/JKorf/Lighter.Net/dotnet.yml?style=for-the-badge)](https://github.com/JKorf/Lighter.Net/actions/workflows/dotnet.yml) ![License](https://img.shields.io/github/license/JKorf/Lighter.Net?style=for-the-badge)
+![Since](https://img.shields.io/badge/since-2026-brightgreen?style=for-the-badge)
 
 [![Docs](https://img.shields.io/badge/Docs-Lighter.Net-1b7f50?style=for-the-badge)](https://cryptoexchange.jkorf.dev/docs/exchange-clients?library=Lighter.Net)
 
