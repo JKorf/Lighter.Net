@@ -28,4 +28,53 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         IFundingRateRestClient
     {
     }
+
+    /// <summary>
+    /// Shared API interface. Shared APIs provide a common,
+    /// exchange-independent contract for accessing functionality across different
+    /// exchange client libraries.
+    /// </summary>
+    public interface ILighterRestClientExchangeSharedApi :
+        IGetKlinesEndpoint,
+        IGetSpotSymbolsEndpoint,
+        IGetFuturesSymbolsEndpoint,
+        IGetSpotTickerEndpoint,
+        IGetAllSpotTickersEndpoint,
+        IGetFuturesTickerEndpoint,
+        IGetAllFuturesTickersEndpoint,
+        IGetBookTickerEndpoint,
+        IGetRecentTradesEndpoint,
+        IGetOrderBookEndpoint,
+        IGetAssetEndpoint,
+        IGetAllAssetsEndpoint,
+        IGetDepositHistoryEndpoint,
+        IGetWithdrawalHistoryEndpoint,
+        IGetFeesEndpoint,
+        IGetBalancesEndpoint,
+        IPlaceSpotOrderEndpoint,
+        IGetSpotOrderEndpoint,
+        IGetOpenSpotOrdersEndpoint,
+        IGetClosedSpotOrdersEndpoint,
+        IGetSpotUserTradeHistoryEndpoint,
+        IGetSpotOrderTradesEndpoint,
+        ICancelSpotOrderEndpoint,
+        IGetSpotOrderByClientOrderIdEndpoint,
+        ICancelSpotOrderByClientOrderIdEndpoint,
+        IGetLeverageEndpoint,
+        ISetLeverageEndpoint,
+        IGetOpenInterestEndpoint,
+        IPlaceFuturesOrderEndpoint,
+        IGetFuturesOrderEndpoint,
+        IGetOpenFuturesOrdersEndpoint,
+        IGetClosedFuturesOrdersEndpoint,
+        IGetFuturesOrderTradesEndpoint,
+        IGetFuturesUserTradeHistoryEndpoint,
+        ICancelFuturesOrderEndpoint,
+        IGetPositionsEndpoint,
+        IClosePositionEndpoint,
+        IGetFuturesOrderByClientOrderIdEndpoint,
+        ICancelFuturesOrderByClientOrderIdEndpoint,
+        IGetFundingRateHistoryEndpoint
+    {
+    }
 }

@@ -14,32 +14,63 @@ using System.Threading.Tasks;
 
 namespace Lighter.Net.Clients.ExchangeApi
 {
-    internal partial class LighterSocketClientExchangeApi : ILighterSocketClientExchangeApiShared
+    internal class LighterSocketClientExchangeSharedApi :
+        SharedApiBase,
+        ILighterSocketClientExchangeApiShared,
+        ILighterSocketClientExchangeSharedApi
     {
+        private readonly LighterSocketClientExchangeApi _api;
+
         private const string _exchangeName = "Lighter";
         private const string _topicSpotId = "LighterSpot";
         private const string _topicFuturesId = "LighterFutures";
 
-        public TradingMode[] SupportedTradingModes => new[] { TradingMode.Spot, TradingMode.PerpetualLinear };
+        public override SharedClientInfo Discover() => SharedUtils.GetClientInfo(LighterExchange.Metadata, this);
 
-        public void SetDefaultExchangeParameter(string key, object value) => ExchangeParameters.SetStaticParameter(Exchange, key, value);
-        public void ResetDefaultExchangeParameters() => ExchangeParameters.ResetStaticParameters();
-        public SharedClientInfo Discover() => SharedUtils.GetClientInfo(LighterExchange.Metadata, this);
+        public LighterSocketClientExchangeSharedApi(LighterSocketClientExchangeApi api)
+            : base(
+                  api.Exchange,
+                  [TradingMode.Spot, TradingMode.PerpetualLinear],
+                  () => api.Authenticated,
+                  api.FormatSymbol)
+        {
+            _api = api;
+
+            SetCapabilities(
+                SubscribeAllTickersOptions,
+                SubscribeTickerOptions,
+                SubscribeTradeOptions,
+                SubscribeBookTickerOptions,
+                SubscribeKlineOptions,
+                SubscribeBalanceOptions,
+                SubscribeFuturesOrderOptions,
+                SubscribeSpotOrderOptions,
+                SubscribeUserTradeOptions,
+                SubscribePositionOptions,
+                PlaceSpotOrderOptions,
+                CancelSpotOrderOptions,
+                PlaceFuturesOrderOptions,
+                CancelFuturesOrderOptions
+                );
+        }
 
         #region Tickers client
-        SubscribeTickersOptions ITickersSocketClient.SubscribeAllTickersOptions { get; } = new SubscribeTickersOptions(_exchangeName);
-        async Task<WebSocketResult<UpdateSubscription>> ITickersSocketClient.SubscribeToAllTickersUpdatesAsync(SubscribeAllTickersRequest request, Action<DataEvent<SharedSpotTicker[]>> handler, CancellationToken ct)
+        async Task<WebSocketResult<UpdateSubscription>> ISubscribeAllTickersOperation.SubscribeToAllTickersUpdatesAsync(SubscribeAllTickersRequest request, Action<DataEvent<SharedTicker[]>> handler, CancellationToken ct)
+            => await SubscribeToAllTickersUpdatesAsync(request, x => handler(x.ToType<SharedTicker[]>(x.Data)), ct).ConfigureAwait(false);
+
+        public SubscribeTickersOptions SubscribeAllTickersOptions { get; } = new SubscribeTickersOptions(_exchangeName);
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToAllTickersUpdatesAsync(SubscribeAllTickersRequest request, Action<DataEvent<SharedSpotTicker[]>> handler, CancellationToken ct)
         {
-            var validationError = ((ITickersSocketClient)this).SubscribeAllTickersOptions.ValidateRequest(request, this);
+            var validationError = SubscribeAllTickersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
             if (request.TradingMode == null || request.TradingMode == TradingMode.Spot)
             {
-                var result = await ExchangeData.SubscribeToSpotTickerUpdatesAsync(update => handler(update.ToType(
+                var result = await _api.ExchangeData.SubscribeToSpotTickerUpdatesAsync(update => handler(update.ToType(
                     update.Data.Tickers.Values.Select(x =>
                     new SharedSpotTicker(
-                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, x.Symbol),
+                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, x.Symbol),
                         x.Symbol,
                         x.LastPrice,
                         x.HighPrice,
@@ -52,10 +83,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             }
             else
             {
-                var result = await ExchangeData.SubscribeToFuturesTickerUpdatesAsync(update => handler(update.ToType(
+                var result = await _api.ExchangeData.SubscribeToFuturesTickerUpdatesAsync(update => handler(update.ToType(
                     update.Data.Tickers.Values.Select(x =>
                     new SharedSpotTicker(
-                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, x.Symbol),
+                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, x.Symbol),
                         x.Symbol,
                         x.LastPrice,
                         x.HighPrice,
@@ -71,19 +102,23 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Ticker client
-        SubscribeTickerOptions ITickerSocketClient.SubscribeTickerOptions { get; } = new SubscribeTickerOptions(_exchangeName);
-        async Task<WebSocketResult<UpdateSubscription>> ITickerSocketClient.SubscribeToTickerUpdatesAsync(SubscribeTickerRequest request, Action<DataEvent<SharedSpotTicker>> handler, CancellationToken ct)
+
+        async Task<WebSocketResult<UpdateSubscription>> ISubscribeTickerOperation.SubscribeToTickerUpdatesAsync(SubscribeTickerRequest request, Action<DataEvent<SharedTicker>> handler, CancellationToken ct)
+            => await SubscribeToTickerUpdatesAsync(request, x => handler(x.ToType<SharedTicker>(x.Data)), ct).ConfigureAwait(false);
+
+        public SubscribeTickerOptions SubscribeTickerOptions { get; } = new SubscribeTickerOptions(_exchangeName);
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToTickerUpdatesAsync(SubscribeTickerRequest request, Action<DataEvent<SharedSpotTicker>> handler, CancellationToken ct)
         {
-            var validationError = ((ITickerSocketClient)this).SubscribeTickerOptions.ValidateRequest(request, this);
+            var validationError = SubscribeTickerOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
             var symbol = request.Symbol!.GetSymbol(FormatSymbol);
             if (request.Symbol!.TradingMode == TradingMode.Spot)
             {
-                var result = await ExchangeData.SubscribeToSpotTickerUpdatesAsync(symbol, update => handler(update.ToType(
+                var result = await _api.ExchangeData.SubscribeToSpotTickerUpdatesAsync(symbol, update => handler(update.ToType(
                     new SharedSpotTicker(
-                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, update.Data.Ticker.Symbol),
+                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, update.Data.Ticker.Symbol),
                         update.Data.Ticker.Symbol, 
                         update.Data.Ticker.LastPrice,
                         update.Data.Ticker.HighPrice,
@@ -96,9 +131,9 @@ namespace Lighter.Net.Clients.ExchangeApi
             }
             else
             {
-                var result = await ExchangeData.SubscribeToFuturesTickerUpdatesAsync(symbol, update => handler(update.ToType(
+                var result = await _api.ExchangeData.SubscribeToFuturesTickerUpdatesAsync(symbol, update => handler(update.ToType(
                     new SharedSpotTicker(
-                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, update.Data.Ticker.Symbol),
+                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, update.Data.Ticker.Symbol),
                         update.Data.Ticker.Symbol,
                         update.Data.Ticker.LastPrice,
                         update.Data.Ticker.HighPrice,
@@ -114,16 +149,16 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Trade client
 
-        SubscribeTradeOptions ITradeSocketClient.SubscribeTradeOptions { get; }
+        public SubscribeTradeOptions SubscribeTradeOptions { get; }
             = new SubscribeTradeOptions(_exchangeName, false);
-        async Task<WebSocketResult<UpdateSubscription>> ITradeSocketClient.SubscribeToTradeUpdatesAsync(SubscribeTradeRequest request, Action<DataEvent<SharedTrade[]>> handler, CancellationToken ct)
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToTradeUpdatesAsync(SubscribeTradeRequest request, Action<DataEvent<SharedTrade[]>> handler, CancellationToken ct)
         {
-            var validationError = ((ITradeSocketClient)this).SubscribeTradeOptions.ValidateRequest(request, this);
+            var validationError = SubscribeTradeOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
             var symbol = request.SymbolName(FormatSymbol);
-            var result = await ExchangeData.SubscribeToTradeUpdatesAsync(symbol, update =>
+            var result = await _api.ExchangeData.SubscribeToTradeUpdatesAsync(symbol, update =>
             {
                 if (update.UpdateType == SocketUpdateType.Snapshot)
                     return;
@@ -147,16 +182,16 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Book Ticker client
 
-        SubscribeBookTickerOptions IBookTickerSocketClient.SubscribeBookTickerOptions { get; }
+        public SubscribeBookTickerOptions SubscribeBookTickerOptions { get; }
             = new SubscribeBookTickerOptions(_exchangeName, false);
-        async Task<WebSocketResult<UpdateSubscription>> IBookTickerSocketClient.SubscribeToBookTickerUpdatesAsync(SubscribeBookTickerRequest request, Action<DataEvent<SharedBookTicker>> handler, CancellationToken ct)
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToBookTickerUpdatesAsync(SubscribeBookTickerRequest request, Action<DataEvent<SharedBookTicker>> handler, CancellationToken ct)
         {
-            var validationError = ((IBookTickerSocketClient)this).SubscribeBookTickerOptions.ValidateRequest(request, this);
+            var validationError = SubscribeBookTickerOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
             var symbol = request.SymbolName(FormatSymbol);
-            var result = await ExchangeData.SubscribeToBookTickerUpdatesAsync(symbol, update => handler(update.ToType(
+            var result = await _api.ExchangeData.SubscribeToBookTickerUpdatesAsync(symbol, update => handler(update.ToType(
                 new SharedBookTicker(
                     request.Symbol,
                     update.Data.BookTicker.Symbol, 
@@ -171,15 +206,15 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Kline client
-        SubscribeKlineOptions IKlineSocketClient.SubscribeKlineOptions { get; } = new SubscribeKlineOptions(_exchangeName, false);
-        async Task<WebSocketResult<UpdateSubscription>> IKlineSocketClient.SubscribeToKlineUpdatesAsync(SubscribeKlineRequest request, Action<DataEvent<SharedKline>> handler, CancellationToken ct)
+        public SubscribeKlineOptions SubscribeKlineOptions { get; } = new SubscribeKlineOptions(_exchangeName, false);
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToKlineUpdatesAsync(SubscribeKlineRequest request, Action<DataEvent<SharedKline>> handler, CancellationToken ct)
         {
-            var validationError = ((IKlineSocketClient)this).SubscribeKlineOptions.ValidateRequest(request, this);
+            var validationError = SubscribeKlineOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
             var symbol = request.SymbolName(FormatSymbol);
-            var result = await ExchangeData.SubscribeToKlineUpdatesAsync(symbol, (KlineInterval)request.Interval, update =>
+            var result = await _api.ExchangeData.SubscribeToKlineUpdatesAsync(symbol, (KlineInterval)request.Interval, update =>
             {
                 foreach (var kline in update.Data.Klines)
                 {
@@ -201,16 +236,16 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Balance client
-        SubscribeBalanceOptions IBalanceSocketClient.SubscribeBalanceOptions { get; }
+        public SubscribeBalanceOptions SubscribeBalanceOptions { get; }
             = new SubscribeBalanceOptions(_exchangeName, true);
-        async Task<WebSocketResult<UpdateSubscription>> IBalanceSocketClient.SubscribeToBalanceUpdatesAsync(SubscribeBalancesRequest request, Action<DataEvent<SharedBalance[]>> handler, CancellationToken ct)
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToBalanceUpdatesAsync(SubscribeBalancesRequest request, Action<DataEvent<SharedBalance[]>> handler, CancellationToken ct)
         {
-            var validationError = ((IBalanceSocketClient)this).SubscribeBalanceOptions.ValidateRequest(request, this);
+            var validationError = SubscribeBalanceOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
             var tradingMode = request.TradingMode ?? TradingMode.Spot;
-            var result = await Account.SubscribeToAccountUpdatesAsync(null,
+            var result = await _api.Account.SubscribeToAccountUpdatesAsync(null,
                 update =>
                 {
                     if (update.Data.Balances == null)
@@ -245,15 +280,18 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Spot Order client
 
-        SubscribeSpotOrderOptions ISpotOrderSocketClient.SubscribeSpotOrderOptions { get; }
-            = new SubscribeSpotOrderOptions(_exchangeName, true);
         async Task<WebSocketResult<UpdateSubscription>> ISpotOrderSocketClient.SubscribeToSpotOrderUpdatesAsync(SubscribeSpotOrderRequest request, Action<DataEvent<SharedSpotOrder[]>> handler, CancellationToken ct)
+            => await SubscribeToSpotOrderUpdatesAsync(request, x => handler(x.ToType<SharedSpotOrder[]>(x.Data)), ct).ConfigureAwait(false);
+
+        public SubscribeSpotOrderOptions SubscribeSpotOrderOptions { get; }
+            = new SubscribeSpotOrderOptions(_exchangeName, true);
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToSpotOrderUpdatesAsync(SubscribeSpotOrderRequest request, Action<DataEvent<SharedSpotOrderUpdate[]>> handler, CancellationToken ct)
         {
-            var validationError = ((ISpotOrderSocketClient)this).SubscribeSpotOrderOptions.ValidateRequest(request, this);
+            var validationError = SubscribeSpotOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
-            var result = await Trading.SubscribeToOrderUpdatesAsync(null,
+            var result = await _api.Trading.SubscribeToOrderUpdatesAsync(null,
                 update =>
                 {
                     var spotOrders = update.Data.Orders.SelectMany(x => x.Value).Where(x => x.MarketIndex >= 2048).ToList();
@@ -261,9 +299,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         return;
 
                     handler(update.ToType(spotOrders.Select(x =>
-                        new SharedSpotOrder(
-                            ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex)),
-                            LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex) ?? string.Empty,
+                        new SharedSpotOrderUpdate(
+                            ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex)),
+                            LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex) ?? string.Empty,
                             x.OrderIndex.ToString(),
                             ParseOrderType(x.OrderType),
                             x.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -339,15 +377,18 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Order client
 
-        SubscribeFuturesOrderOptions IFuturesOrderSocketClient.SubscribeFuturesOrderOptions { get; }
-            = new SubscribeFuturesOrderOptions(_exchangeName, true);
         async Task<WebSocketResult<UpdateSubscription>> IFuturesOrderSocketClient.SubscribeToFuturesOrderUpdatesAsync(SubscribeFuturesOrderRequest request, Action<DataEvent<SharedFuturesOrder[]>> handler, CancellationToken ct)
+            => await SubscribeToFuturesOrderUpdatesAsync(request, x => handler(x.ToType<SharedFuturesOrder[]>(x.Data)), ct).ConfigureAwait(false);
+
+        public SubscribeFuturesOrderOptions SubscribeFuturesOrderOptions { get; }
+            = new SubscribeFuturesOrderOptions(_exchangeName, true);
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToFuturesOrderUpdatesAsync(SubscribeFuturesOrderRequest request, Action<DataEvent<SharedFuturesOrderUpdate[]>> handler, CancellationToken ct)
         {
-            var validationError = ((IFuturesOrderSocketClient)this).SubscribeFuturesOrderOptions.ValidateRequest(request, this);
+            var validationError = SubscribeFuturesOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
-            var result = await Trading.SubscribeToOrderUpdatesAsync(null,
+            var result = await _api.Trading.SubscribeToOrderUpdatesAsync(null,
                 update =>
                 {
                     var futuresOrders = update.Data.Orders.SelectMany(x => x.Value).Where(x => x.MarketIndex < 2048).ToList();
@@ -355,9 +396,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                         return;
 
                     handler(update.ToType(futuresOrders.Select(x =>
-                        new SharedFuturesOrder(
-                            ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex)),
-                            LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex) ?? string.Empty,
+                        new SharedFuturesOrderUpdate(
+                            ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex)),
+                            LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex) ?? string.Empty,
                             x.OrderIndex.ToString(),
                             ParseOrderType(x.OrderType),
                             x.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -383,10 +424,10 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region User Trade client
-        SubscribeUserTradeOptions IUserTradeSocketClient.SubscribeUserTradeOptions { get; } = new SubscribeUserTradeOptions(_exchangeName, true);
-        async Task<WebSocketResult<UpdateSubscription>> IUserTradeSocketClient.SubscribeToUserTradeUpdatesAsync(SubscribeUserTradeRequest request, Action<DataEvent<SharedUserTrade[]>> handler, CancellationToken ct)
+        public SubscribeUserTradeOptions SubscribeUserTradeOptions { get; } = new SubscribeUserTradeOptions(_exchangeName, true);
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToUserTradeUpdatesAsync(SubscribeUserTradeRequest request, Action<DataEvent<SharedUserTrade[]>> handler, CancellationToken ct)
         {
-            var result = await Trading.SubscribeToUserTradeUpdatesAsync(null,
+            var result = await _api.Trading.SubscribeToUserTradeUpdatesAsync(null,
                 update =>
                 {
                     List<LighterUserTrade> trades;
@@ -401,18 +442,18 @@ namespace Lighter.Net.Clients.ExchangeApi
                         return;
 
                     handler(update.ToType<SharedUserTrade[]>(trades.Select(x => new SharedUserTrade(
-                                ExchangeSymbolCache.ParseSymbol(x.MarketId >= 2048 ? _topicSpotId : _topicFuturesId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketId)),
-                                LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
-                                (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
+                                ExchangeSymbolCache.ParseSymbol(x.MarketId >= 2048 ? _topicSpotId : _topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId)),
+                                LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
+                                (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                                 x.TradeId.ToString(),
-                                x.AskAccountId == ApiCredentials.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                                x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                                 new SharedOrderQuantity(x.Quantity),
                                 x.Price,
                                 x.Timestamp)
                         {
-                            ClientOrderId = (x.BidAccountId == ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                            Fee = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
-                            Role = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
+                            ClientOrderId = (x.BidAccountId == _api.ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
+                            Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                            Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
                     }).ToArray()));
                 },
                 ct: ct).ConfigureAwait(false);
@@ -422,18 +463,18 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Position client
-        SubscribePositionOptions IPositionSocketClient.SubscribePositionOptions { get; }
+        public SubscribePositionOptions SubscribePositionOptions { get; }
             = new SubscribePositionOptions(_exchangeName, true);
-        async Task<WebSocketResult<UpdateSubscription>> IPositionSocketClient.SubscribeToPositionUpdatesAsync(SubscribePositionRequest request, Action<DataEvent<SharedPosition[]>> handler, CancellationToken ct)
+        public async Task<WebSocketResult<UpdateSubscription>> SubscribeToPositionUpdatesAsync(SubscribePositionRequest request, Action<DataEvent<SharedPosition[]>> handler, CancellationToken ct)
         {
-            var validationError = ((IPositionSocketClient)this).SubscribePositionOptions.ValidateRequest(request, this);
+            var validationError = SubscribePositionOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return WebSocketResult.Fail<UpdateSubscription>(Exchange, validationError);
 
-            var result = await Trading.SubscribeToPositionUpdatesAsync(null,
+            var result = await _api.Trading.SubscribeToPositionUpdatesAsync(null,
                 update => handler(update.ToType(update.Data.Positions.Values.Select(x => 
                     new SharedPosition(
-                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, x.Symbol), 
+                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, x.Symbol), 
                         x.Symbol,
                         new SharedOrderQuantity(Math.Abs(x.Position)), 
                         null)
@@ -452,28 +493,28 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Spot Order Client
 
-        SharedFeeDeductionType ISpotOrderManagementSocketClient.SpotFeeDeductionType => SharedFeeDeductionType.DeductFromOutput;
-        SharedFeeAssetType ISpotOrderManagementSocketClient.SpotFeeAssetType => SharedFeeAssetType.OutputAsset;
-        SharedOrderType[] ISpotOrderManagementSocketClient.SpotSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
-        SharedTimeInForce[] ISpotOrderManagementSocketClient.SpotSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
-        SharedQuantitySupport ISpotOrderManagementSocketClient.SpotSupportedOrderQuantity { get; } = new SharedQuantitySupport(
+        public SharedFeeDeductionType SpotFeeDeductionType => SharedFeeDeductionType.DeductFromOutput;
+        public SharedFeeAssetType SpotFeeAssetType => SharedFeeAssetType.OutputAsset;
+        public SharedOrderType[] SpotSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
+        public SharedTimeInForce[] SpotSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
+        public SharedQuantitySupport SpotSupportedOrderQuantity { get; } = new SharedQuantitySupport(
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset);
 
-        string ISpotOrderManagementSocketClient.GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
+        public string GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
 
-        PlaceSpotOrderSocketOptions ISpotOrderManagementSocketClient.PlaceSpotOrderOptions { get; } = new PlaceSpotOrderSocketOptions(_exchangeName)
+        public PlaceSpotOrderSocketOptions PlaceSpotOrderOptions { get; } = new PlaceSpotOrderSocketOptions(_exchangeName)
         {
-            RequiredOptionalParameters = new List<ParameterDescription>
+            RequiredRequestParameters = new List<ParameterDescription>
             {
                 new ParameterDescription(nameof(PlaceSpotOrderRequest.Price), typeof(decimal), "Price for the order. For market orders this should be the current symbol price to calculate max slippage", 21.5m)
             },
         };
-        async Task<QueryResult<SharedId>> ISpotOrderManagementSocketClient.PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
+        public async Task<QueryResult<SharedId>> PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.PlaceSpotOrderOptions.ValidateRequest(request, this);
+            var validationError = PlaceSpotOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return QueryResult.Fail<SharedId>(Exchange, validationError);
 
@@ -487,10 +528,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             }
             else
             {
-                cid = long.Parse(((ISpotOrderManagementSocketClient)SharedClient).GenerateClientOrderId());
+                cid = long.Parse(GenerateClientOrderId());
             }
 
-            var result = await Trading.PlaceOrderAsync(
+            var result = await _api.Trading.PlaceOrderAsync(
                 request.Symbol!.GetSymbol(FormatSymbol),
                 request.Side == SharedOrderSide.Buy ? Enums.OrderSide.Buy : Enums.OrderSide.Sell,
                 request.OrderType == SharedOrderType.Limit ? OrderType.Limit : OrderType.Market,
@@ -525,18 +566,18 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return request.Price!.Value * 0.95m;
         }
-        CancelSpotOrderSocketOptions ISpotOrderManagementSocketClient.CancelSpotOrderOptions { get; }
+        public CancelSpotOrderSocketOptions CancelSpotOrderOptions { get; }
             = new CancelSpotOrderSocketOptions(_exchangeName, true);
-        async Task<QueryResult<SharedId>> ISpotOrderManagementSocketClient.CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
+        public async Task<QueryResult<SharedId>> CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.CancelSpotOrderOptions.ValidateRequest(request, this);
+            var validationError = CancelSpotOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return QueryResult.Fail<SharedId>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return QueryResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
 
-            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
+            var order = await _api.Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
             if (!order.Success)
                 return QueryResult.Fail<SharedId>(order);
 
@@ -546,23 +587,21 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Order Client
 
-        SharedFeeDeductionType IFuturesOrderManagementSocketClient.FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
-        SharedFeeAssetType IFuturesOrderManagementSocketClient.FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
+        public SharedFeeDeductionType FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
+        public SharedFeeAssetType FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
 
-        SharedOrderType[] IFuturesOrderManagementSocketClient.FuturesSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
-        SharedTimeInForce[] IFuturesOrderManagementSocketClient.FuturesSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
-        SharedQuantitySupport IFuturesOrderManagementSocketClient.FuturesSupportedOrderQuantity { get; } = new SharedQuantitySupport(
+        public SharedOrderType[] FuturesSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
+        public SharedTimeInForce[] FuturesSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
+        public SharedQuantitySupport FuturesSupportedOrderQuantity { get; } = new SharedQuantitySupport(
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset);
 
-        string IFuturesOrderManagementSocketClient.GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
-
-        PlaceFuturesOrderSocketOptions IFuturesOrderManagementSocketClient.PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderSocketOptions(_exchangeName, false);
-        async Task<QueryResult<SharedId>> IFuturesOrderManagementSocketClient.PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
+        public PlaceFuturesOrderSocketOptions PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderSocketOptions(_exchangeName, false);
+        public async Task<QueryResult<SharedId>> PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.PlaceFuturesOrderOptions.ValidateRequest(request, this);
+            var validationError = PlaceFuturesOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return QueryResult.Fail<SharedId>(Exchange, validationError);
 
@@ -576,10 +615,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             }
             else
             {
-                cid = long.Parse(((IFuturesOrderManagementSocketClient)SharedClient).GenerateClientOrderId());
+                cid = long.Parse(GenerateClientOrderId());
             }
 
-            var result = await Trading.PlaceOrderAsync(
+            var result = await _api.Trading.PlaceOrderAsync(
                 request.Symbol!.GetSymbol(FormatSymbol),
                 request.Side == SharedOrderSide.Buy ? Enums.OrderSide.Buy : Enums.OrderSide.Sell,
                 request.OrderType == SharedOrderType.Limit ? OrderType.Limit : OrderType.Market,
@@ -605,17 +644,17 @@ namespace Lighter.Net.Clients.ExchangeApi
             return request.Price!.Value * 0.95m;
         }
 
-        CancelFuturesOrderSocketOptions IFuturesOrderManagementSocketClient.CancelFuturesOrderOptions { get; } = new CancelFuturesOrderSocketOptions(_exchangeName, true);
-        async Task<QueryResult<SharedId>> IFuturesOrderManagementSocketClient.CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
+        public CancelFuturesOrderSocketOptions CancelFuturesOrderOptions { get; } = new CancelFuturesOrderSocketOptions(_exchangeName, true);
+        public async Task<QueryResult<SharedId>> CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.CancelFuturesOrderOptions.ValidateRequest(request, this);
+            var validationError = CancelFuturesOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return QueryResult.Fail<SharedId>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return QueryResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
 
-            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
+            var order = await _api.Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
             if (!order.Success)
                 return QueryResult.Fail<SharedId>(order);
 

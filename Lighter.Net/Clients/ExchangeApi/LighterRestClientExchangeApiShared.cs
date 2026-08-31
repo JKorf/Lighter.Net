@@ -14,21 +14,76 @@ using System.Threading.Tasks;
 
 namespace Lighter.Net.Clients.ExchangeApi
 {
-    internal partial class LighterRestClientExchangeApi : ILighterRestClientExchangeApiShared
+    internal class LighterRestClientExchangeSharedApi :
+        SharedApiBase,
+        ILighterRestClientExchangeApiShared,
+        ILighterRestClientExchangeSharedApi
     {
+        private readonly LighterRestClientExchangeApi _api;
+
         private const string _exchangeName = "Lighter";
         private const string _topicSpotId = "LighterSpot";
         private const string _topicFuturesId = "LighterFutures";
 
-        public TradingMode[] SupportedTradingModes => new[] { TradingMode.Spot, TradingMode.PerpetualLinear };
+        public override SharedClientInfo Discover() => SharedUtils.GetClientInfo(LighterExchange.Metadata, this);
 
-        public void SetDefaultExchangeParameter(string key, object value) => ExchangeParameters.SetStaticParameter(Exchange, key, value);
-        public void ResetDefaultExchangeParameters() => ExchangeParameters.ResetStaticParameters();
-        public SharedClientInfo Discover() => SharedUtils.GetClientInfo(LighterExchange.Metadata, this);
+        public LighterRestClientExchangeSharedApi(LighterRestClientExchangeApi api)
+            : base(
+                  api.Exchange,
+                  [TradingMode.Spot, TradingMode.PerpetualLinear],
+                  () => api.Authenticated,
+                  api.FormatSymbol)
+        {
+            _api = api;
+
+            SetCapabilities(
+                GetKlinesOptions,
+                GetSpotSymbolsOptions,
+                GetFuturesSymbolsOptions,
+                GetSpotTickerOptions,
+                GetAllSpotTickersOptions,
+                GetFuturesTickerOptions,
+                GetAllFuturesTickersOptions,
+                GetBookTickerOptions,
+                GetRecentTradesOptions,
+                GetOrderBookOptions,
+                GetAssetOptions,
+                GetAllAssetsOptions,
+                GetDepositHistoryOptions,
+                GetWithdrawalHistoryOptions,
+                GetFeeOptions,
+                GetBalancesOptions,
+                PlaceSpotOrderOptions,
+                GetSpotOrderOptions,
+                GetOpenSpotOrdersOptions,
+                GetClosedSpotOrdersOptions,
+                CancelSpotOrderOptions,
+                GetSpotUserTradeHistoryOptions,
+                GetSpotOrderTradesOptions,
+                GetSpotOrderByClientOrderIdOptions,
+                CancelSpotOrderByClientOrderIdOptions,
+                PlaceFuturesOrderOptions,
+                GetFuturesOrderOptions,
+                GetOpenFuturesOrdersOptions,
+                GetClosedFuturesOrdersOptions,
+                CancelFuturesOrderOptions,
+                GetFuturesOrderTradesOptions,
+                GetFuturesUserTradeHistoryOptions,
+                ClosePositionOptions,
+                GetPositionsOptions,
+                GetFuturesOrderByClientOrderIdOptions,
+                CancelFuturesOrderByClientOrderIdOptions,
+                GetLeverageOptions,
+                SetLeverageOptions,
+                GetOpenFuturesOrdersOptions,
+                GetFundingRateHistoryOptions,
+                GetOpenInterestOptions
+                );
+        }
 
         #region Klines Client
 
-        GetKlinesOptions IKlineRestClient.GetKlinesOptions { get; } = new GetKlinesOptions(_exchangeName, false, true, true, 500, false, [
+        public GetKlinesOptions GetKlinesOptions { get; } = new GetKlinesOptions(_exchangeName, false, true, true, 500, false, [
             SharedKlineInterval.OneMinute,
             SharedKlineInterval.FiveMinutes,
             SharedKlineInterval.FifteenMinutes,
@@ -38,15 +93,15 @@ namespace Lighter.Net.Clients.ExchangeApi
             SharedKlineInterval.TwelveHours,
             SharedKlineInterval.OneDay
             ]);
-        async Task<HttpResult<SharedKline[]>> IKlineRestClient.GetKlinesAsync(GetKlinesRequest request, PageRequest? pageRequest, CancellationToken ct)
+        public async Task<HttpResult<SharedKline[]>> GetKlinesAsync(GetKlinesRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetKlinesOptions.ValidateRequest(request, this);
+            var validationError = GetKlinesOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedKline[]>(Exchange, validationError);
 
             var direction = DataDirection.Descending;
             var symbol = request.SymbolName(FormatSymbol);
-            var limit = request.Limit ?? SharedClient.GetKlinesOptions.MaxLimit;
+            var limit = request.Limit ?? GetKlinesOptions.MaxLimit;
             var pageParams = Pagination.GetPaginationParameters(
                 direction,
                 limit,
@@ -55,7 +110,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 pageRequest);
 
             // Get data
-            var result = await ExchangeData.GetKlinesAsync(
+            var result = await _api.ExchangeData.GetKlinesAsync(
                 symbol,
                 (KlineInterval)request.Interval,
                 pageParams.StartTime,
@@ -97,18 +152,18 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Spot Symbol client
 
-        SharedSymbolCatalog? ISpotSymbolRestClient.SpotSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicSpotId, EnvironmentName, null);
-        GetSpotSymbolsOptions ISpotSymbolRestClient.GetSpotSymbolsOptions { get; }
+        public SharedSymbolCatalog? SpotSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicSpotId, _api.EnvironmentName, null);
+        public GetSpotSymbolsOptions GetSpotSymbolsOptions { get; }
             = new GetSpotSymbolsOptions(_exchangeName, false);
 
-        async Task<HttpResult<SharedSpotSymbol[]>> ISpotSymbolRestClient.GetSpotSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedSpotSymbol[]>> GetSpotSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotSymbolsOptions.ValidateRequest(request, this);
+            var validationError = GetSpotSymbolsOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotSymbol[]>(Exchange, validationError);
 
-            var assetTask = ExchangeData.GetAssetsAsync();
-            var symbolTask = ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Spot, ct: ct);
+            var assetTask = _api.ExchangeData.GetAssetsAsync();
+            var symbolTask = _api.ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Spot, ct: ct);
             await Task.WhenAll(assetTask, symbolTask).ConfigureAwait(false);
             var assetsResult = assetTask.Result;
             var symbolsResult = symbolTask.Result;
@@ -122,7 +177,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                .Where(x => x != null)
                .ToArray();
 
-            ExchangeSymbolCache.UpdateSymbolInfo(_topicSpotId, EnvironmentName, null, data);
+            ExchangeSymbolCache.UpdateSymbolInfo(_topicSpotId, _api.EnvironmentName, null, data);
             return HttpResult.Ok(symbolsResult, SharedUtils.ApplySymbolFilter(data, request));
         }
 
@@ -150,58 +205,58 @@ namespace Lighter.Net.Clients.ExchangeApi
             return result;
         }
 
-        async Task<ExchangeCallResult<SharedSymbol[]>> ISpotSymbolRestClient.GetSpotSymbolsForBaseAssetAsync(string baseAsset)
+        public async Task<ExchangeCallResult<SharedSymbol[]>> GetSpotSymbolsForBaseAssetAsync(string baseAsset)
         {
-            if (!ExchangeSymbolCache.HasCached(_topicSpotId, EnvironmentName, null))
+            if (!ExchangeSymbolCache.HasCached(_topicSpotId, _api.EnvironmentName, null))
             {
-                var symbols = await ((ISpotSymbolRestClient)this).GetSpotSymbolsAsync(new GetSymbolsRequest()).ConfigureAwait(false);
+                var symbols = await GetSpotSymbolsAsync(new GetSymbolsRequest(), default).ConfigureAwait(false);
                 if (!symbols.Success)
                     return ExchangeCallResult<SharedSymbol[]>.Fail(Exchange, symbols.Error!);
             }
 
-            return ExchangeCallResult<SharedSymbol[]>.Ok(Exchange, ExchangeSymbolCache.GetSymbolsForBaseAsset(_topicSpotId, EnvironmentName, null, baseAsset));
+            return ExchangeCallResult<SharedSymbol[]>.Ok(Exchange, ExchangeSymbolCache.GetSymbolsForBaseAsset(_topicSpotId, _api.EnvironmentName, null, baseAsset));
         }
 
-        async Task<ExchangeCallResult<bool>> ISpotSymbolRestClient.SupportsSpotSymbolAsync(SharedSymbol symbol)
+        public async Task<ExchangeCallResult<bool>> SupportsSpotSymbolAsync(SharedSymbol symbol)
         {
             if (symbol.TradingMode != TradingMode.Spot)
                 throw new ArgumentException(nameof(symbol), "Only Spot symbols allowed");
 
-            if (!ExchangeSymbolCache.HasCached(_topicSpotId, EnvironmentName, null))
+            if (!ExchangeSymbolCache.HasCached(_topicSpotId, _api.EnvironmentName, null))
             {
-                var symbols = await ((ISpotSymbolRestClient)this).GetSpotSymbolsAsync(new GetSymbolsRequest()).ConfigureAwait(false);
+                var symbols = await GetSpotSymbolsAsync(new GetSymbolsRequest(), default).ConfigureAwait(false);
                 if (!symbols.Success)
                     return ExchangeCallResult<bool>.Fail(Exchange, symbols.Error!);
             }
 
-            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicSpotId, EnvironmentName, null, symbol));
+            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicSpotId, _api.EnvironmentName, null, symbol));
         }
 
-        async Task<ExchangeCallResult<bool>> ISpotSymbolRestClient.SupportsSpotSymbolAsync(string symbolName)
+        public async Task<ExchangeCallResult<bool>> SupportsSpotSymbolAsync(string symbolName)
         {
-            if (!ExchangeSymbolCache.HasCached(_topicSpotId, EnvironmentName, null))
+            if (!ExchangeSymbolCache.HasCached(_topicSpotId, _api.EnvironmentName, null))
             {
-                var symbols = await ((ISpotSymbolRestClient)this).GetSpotSymbolsAsync(new GetSymbolsRequest()).ConfigureAwait(false);
+                var symbols = await GetSpotSymbolsAsync(new GetSymbolsRequest(), default).ConfigureAwait(false);
                 if (!symbols.Success)
                     return ExchangeCallResult<bool>.Fail(Exchange, symbols.Error!);
             }
 
-            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicSpotId, EnvironmentName, null, symbolName));
+            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicSpotId, _api.EnvironmentName, null, symbolName));
         }
         #endregion
 
         #region Futures Symbol client
 
-        SharedSymbolCatalog? IFuturesSymbolRestClient.FuturesSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicFuturesId, EnvironmentName, null);
-        GetFuturesSymbolsOptions IFuturesSymbolRestClient.GetFuturesSymbolsOptions { get; } = new GetFuturesSymbolsOptions(_exchangeName, false);
-        async Task<HttpResult<SharedFuturesSymbol[]>> IFuturesSymbolRestClient.GetFuturesSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
+        public SharedSymbolCatalog? FuturesSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicFuturesId, _api.EnvironmentName, null);
+        public GetFuturesSymbolsOptions GetFuturesSymbolsOptions { get; } = new GetFuturesSymbolsOptions(_exchangeName, false);
+        public async Task<HttpResult<SharedFuturesSymbol[]>> GetFuturesSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotSymbolsOptions.ValidateRequest(request, this);
+            var validationError = GetSpotSymbolsOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesSymbol[]>(Exchange, validationError);
 
-            var symbolsTask = ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Perp, ct: ct);
-            var tokensTask = ExchangeData.GetTokensAsync(ct: ct);
+            var symbolsTask = _api.ExchangeData.GetSymbolsAsync(symbolType: SymbolTypeFilter.Perp, ct: ct);
+            var tokensTask = _api.ExchangeData.GetTokensAsync(ct: ct);
             await Task.WhenAll(symbolsTask, tokensTask).ConfigureAwait(false);
             var resultSymbols = symbolsTask.Result;
             var resultTokens = tokensTask.Result;
@@ -219,7 +274,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             var symbolRegistrations = resultData
                 .Concat(resultSymbols.Data.Select(x => new SharedFuturesSymbol(TradingMode.PerpetualLinear, x.Symbol, "USDC", x.Symbol, true))).ToArray();
 
-            ExchangeSymbolCache.UpdateSymbolInfo(_topicFuturesId, EnvironmentName, null, symbolRegistrations);
+            ExchangeSymbolCache.UpdateSymbolInfo(_topicFuturesId, _api.EnvironmentName, null, symbolRegistrations);
             return HttpResult.Ok(resultSymbols, SharedUtils.ApplySymbolFilter(resultData, request));
         }
 
@@ -275,56 +330,56 @@ namespace Lighter.Net.Clients.ExchangeApi
             return result;
         }
 
-        async Task<ExchangeCallResult<SharedSymbol[]>> IFuturesSymbolRestClient.GetFuturesSymbolsForBaseAssetAsync(string baseAsset)
+        public async Task<ExchangeCallResult<SharedSymbol[]>> GetFuturesSymbolsForBaseAssetAsync(string baseAsset)
         {
-            if (!ExchangeSymbolCache.HasCached(_topicFuturesId, EnvironmentName, null))
+            if (!ExchangeSymbolCache.HasCached(_topicFuturesId, _api.EnvironmentName, null))
             {
-                var symbols = await ((IFuturesSymbolRestClient)this).GetFuturesSymbolsAsync(new GetSymbolsRequest()).ConfigureAwait(false);
+                var symbols = await GetFuturesSymbolsAsync(new GetSymbolsRequest(), default).ConfigureAwait(false);
                 if (!symbols.Success)
                     return ExchangeCallResult<SharedSymbol[]>.Fail(Exchange, symbols.Error!);
             }
 
-            return ExchangeCallResult<SharedSymbol[]>.Ok(Exchange, ExchangeSymbolCache.GetSymbolsForBaseAsset(_topicFuturesId, EnvironmentName, null, baseAsset));
+            return ExchangeCallResult<SharedSymbol[]>.Ok(Exchange, ExchangeSymbolCache.GetSymbolsForBaseAsset(_topicFuturesId, _api.EnvironmentName, null, baseAsset));
         }
 
-        async Task<ExchangeCallResult<bool>> IFuturesSymbolRestClient.SupportsFuturesSymbolAsync(SharedSymbol symbol)
+        public async Task<ExchangeCallResult<bool>> SupportsFuturesSymbolAsync(SharedSymbol symbol)
         {
             if (symbol.TradingMode == TradingMode.Spot)
                 throw new ArgumentException(nameof(symbol), "Spot symbols not allowed");
 
-            if (!ExchangeSymbolCache.HasCached(_topicFuturesId, EnvironmentName, null))
+            if (!ExchangeSymbolCache.HasCached(_topicFuturesId, _api.EnvironmentName, null))
             {
-                var symbols = await ((IFuturesSymbolRestClient)this).GetFuturesSymbolsAsync(new GetSymbolsRequest()).ConfigureAwait(false);
+                var symbols = await GetFuturesSymbolsAsync(new GetSymbolsRequest(), default).ConfigureAwait(false);
                 if (!symbols.Success)
                     return ExchangeCallResult<bool>.Fail(Exchange, symbols.Error!);
             }
 
-            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicFuturesId, EnvironmentName, null, symbol));
+            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicFuturesId, _api.EnvironmentName, null, symbol));
         }
 
-        async Task<ExchangeCallResult<bool>> IFuturesSymbolRestClient.SupportsFuturesSymbolAsync(string symbolName)
+        public async Task<ExchangeCallResult<bool>> SupportsFuturesSymbolAsync(string symbolName)
         {
-            if (!ExchangeSymbolCache.HasCached(_topicFuturesId, EnvironmentName, null))
+            if (!ExchangeSymbolCache.HasCached(_topicFuturesId, _api.EnvironmentName, null))
             {
-                var symbols = await ((IFuturesSymbolRestClient)this).GetFuturesSymbolsAsync(new GetSymbolsRequest()).ConfigureAwait(false);
+                var symbols = await GetFuturesSymbolsAsync(new GetSymbolsRequest(), default).ConfigureAwait(false);
                 if (!symbols.Success)
                     return ExchangeCallResult<bool>.Fail(Exchange, symbols.Error!);
             }
 
-            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicFuturesId, EnvironmentName, null, symbolName));
+            return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicFuturesId, _api.EnvironmentName, null, symbolName));
         }
         #endregion
 
         #region Spot Ticker client
 
-        GetSpotTickerOptions ISpotTickerRestClient.GetSpotTickerOptions { get; } = new GetSpotTickerOptions(_exchangeName);
-        async Task<HttpResult<SharedSpotTicker>> ISpotTickerRestClient.GetSpotTickerAsync(GetTickerRequest request, CancellationToken ct)
+        public GetSpotTickerOptions GetSpotTickerOptions { get; } = new GetSpotTickerOptions(_exchangeName);
+        public async Task<HttpResult<SharedSpotTicker>> GetSpotTickerAsync(GetTickerRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotTickerOptions.ValidateRequest(request, this);
+            var validationError = GetSpotTickerOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotTicker>(Exchange, validationError);
 
-            var result = await ExchangeData.GetSymbolDetailsAsync(request.SymbolName(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var result = await _api.ExchangeData.GetSymbolDetailsAsync(request.SymbolName(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedSpotTicker>(result);
 
@@ -341,20 +396,24 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetSpotTickersOptions ISpotTickerRestClient.GetSpotTickersOptions { get; } = new GetSpotTickersOptions(_exchangeName);
-        async Task<HttpResult<SharedSpotTicker[]>> ISpotTickerRestClient.GetSpotTickersAsync(GetTickersRequest request, CancellationToken ct)
+        Task<HttpResult<SharedSpotTicker[]>> ISpotTickerRestClient.GetSpotTickersAsync(GetTickersRequest request, CancellationToken ct)
+            => GetAllSpotTickersAsync(request, ct);
+        GetAllSpotTickersOptions ISpotTickerRestClient.GetSpotTickersOptions => GetAllSpotTickersOptions;
+
+        public GetAllSpotTickersOptions GetAllSpotTickersOptions { get; } = new GetAllSpotTickersOptions(_exchangeName);
+        public async Task<HttpResult<SharedSpotTicker[]>> GetAllSpotTickersAsync(GetTickersRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotTickersOptions.ValidateRequest(request, this);
+            var validationError = GetAllSpotTickersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotTicker[]>(Exchange, validationError);
 
-            var result = await ExchangeData.GetSymbolDetailsAsync(symbolType: SymbolTypeFilter.Spot, ct: ct).ConfigureAwait(false);
+            var result = await _api.ExchangeData.GetSymbolDetailsAsync(symbolType: SymbolTypeFilter.Spot, ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedSpotTicker[]>(result);
 
             return HttpResult.Ok(result, result.Data!.SpotSymbols.Select(x =>
                     new SharedSpotTicker(
-                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, x.Symbol),
+                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, x.Symbol),
                         x.Symbol,
                         x.LastPrice,
                         x.HighPrice,
@@ -370,14 +429,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Ticker client
 
-        GetFuturesTickerOptions IFuturesTickerRestClient.GetFuturesTickerOptions { get; } = new GetFuturesTickerOptions(_exchangeName);
-        async Task<HttpResult<SharedFuturesTicker>> IFuturesTickerRestClient.GetFuturesTickerAsync(GetTickerRequest request, CancellationToken ct)
+        public GetFuturesTickerOptions GetFuturesTickerOptions { get; } = new GetFuturesTickerOptions(_exchangeName);
+        public async Task<HttpResult<SharedFuturesTicker>> GetFuturesTickerAsync(GetTickerRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFuturesTickerOptions.ValidateRequest(request, this);
+            var validationError = GetFuturesTickerOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesTicker>(Exchange, validationError);
 
-            var result = await ExchangeData.GetSymbolDetailsAsync(request.SymbolName(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var result = await _api.ExchangeData.GetSymbolDetailsAsync(request.SymbolName(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedFuturesTicker>(result);
 
@@ -396,20 +455,24 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetFuturesTickersOptions IFuturesTickerRestClient.GetFuturesTickersOptions { get; } = new GetFuturesTickersOptions(_exchangeName);
-        async Task<HttpResult<SharedFuturesTicker[]>> IFuturesTickerRestClient.GetFuturesTickersAsync(GetTickersRequest request, CancellationToken ct)
+        Task<HttpResult<SharedFuturesTicker[]>> IFuturesTickerRestClient.GetFuturesTickersAsync(GetTickersRequest request, CancellationToken ct)
+            => GetAllFuturesTickersAsync(request, ct);
+        GetAllFuturesTickersOptions IFuturesTickerRestClient.GetFuturesTickersOptions => GetAllFuturesTickersOptions;
+
+        public GetAllFuturesTickersOptions GetAllFuturesTickersOptions { get; } = new GetAllFuturesTickersOptions(_exchangeName);
+        public async Task<HttpResult<SharedFuturesTicker[]>> GetAllFuturesTickersAsync(GetTickersRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFuturesTickersOptions.ValidateRequest(request, this);
+            var validationError = GetAllFuturesTickersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesTicker[]>(Exchange, validationError);
 
-            var result = await ExchangeData.GetSymbolDetailsAsync(symbolType: SymbolTypeFilter.Perp, ct: ct).ConfigureAwait(false);
+            var result = await _api.ExchangeData.GetSymbolDetailsAsync(symbolType: SymbolTypeFilter.Perp, ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedFuturesTicker[]>(result);
 
             return HttpResult.Ok(result, result.Data!.PerpSymbols.Select(x =>
                     new SharedFuturesTicker(
-                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, x.Symbol),
+                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, x.Symbol),
                         x.Symbol,
                         x.LastPrice,
                         x.HighPrice,
@@ -427,16 +490,16 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Book Ticker client
 
-        GetBookTickerOptions IBookTickerRestClient.GetBookTickerOptions { get; }
+        public GetBookTickerOptions GetBookTickerOptions { get; }
             = new GetBookTickerOptions(_exchangeName, false);
-        async Task<HttpResult<SharedBookTicker>> IBookTickerRestClient.GetBookTickerAsync(GetBookTickerRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedBookTicker>> GetBookTickerAsync(GetBookTickerRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetBookTickerOptions.ValidateRequest(request, this);
+            var validationError = GetBookTickerOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedBookTicker>(Exchange, validationError);
 
             var symbol = request.Symbol!.GetSymbol(FormatSymbol);
-            var resultTicker = await ExchangeData.GetOrderBookAsync(symbol, 1, ct: ct).ConfigureAwait(false);
+            var resultTicker = await _api.ExchangeData.GetOrderBookAsync(symbol, 1, ct: ct).ConfigureAwait(false);
             if (!resultTicker.Success)
                 return HttpResult.Fail<SharedBookTicker>(resultTicker);
 
@@ -453,17 +516,17 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Recent Trades client
-        GetRecentTradesOptions IRecentTradeRestClient.GetRecentTradesOptions { get; } = new GetRecentTradesOptions(_exchangeName, 100, false);
+        public GetRecentTradesOptions GetRecentTradesOptions { get; } = new GetRecentTradesOptions(_exchangeName, 100, false);
 
-        async Task<HttpResult<SharedTrade[]>> IRecentTradeRestClient.GetRecentTradesAsync(GetRecentTradesRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedTrade[]>> GetRecentTradesAsync(GetRecentTradesRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetRecentTradesOptions.ValidateRequest(request, this);
+            var validationError = GetRecentTradesOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedTrade[]>(Exchange, validationError);
 
             // Get data
             var symbol = request.Symbol!.GetSymbol(FormatSymbol);
-            var result = await ExchangeData.GetRecentTradesAsync(
+            var result = await _api.ExchangeData.GetRecentTradesAsync(
                 symbol,
                 limit: request.Limit,
                 ct: ct).ConfigureAwait(false);
@@ -481,17 +544,17 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Order Book client
-        GetOrderBookOptions IOrderBookRestClient.GetOrderBookOptions { get; } = new GetOrderBookOptions(_exchangeName, 1, 250, false)
+        public GetOrderBookOptions GetOrderBookOptions { get; } = new GetOrderBookOptions(_exchangeName, 1, 250, false)
         {
             RequestNotes = "When specifying the limit parameter less entries might be returned as individual orders are combined into aggregated levels client side"
         };
-        async Task<HttpResult<SharedOrderBook>> IOrderBookRestClient.GetOrderBookAsync(GetOrderBookRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedOrderBook>> GetOrderBookAsync(GetOrderBookRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetOrderBookOptions.ValidateRequest(request, this);
+            var validationError = GetOrderBookOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedOrderBook>(Exchange, validationError);
 
-            var result = await ExchangeData.GetOrderBookAsync(
+            var result = await _api.ExchangeData.GetOrderBookAsync(
                 request.Symbol!.GetSymbol(FormatSymbol),
                 limit: request.Limit ?? 50,
                 ct: ct).ConfigureAwait(false);
@@ -504,6 +567,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result, 
                 new SharedOrderBook(
                     SharedQuantityType.BaseAsset,
+                    null,
                     asks.Select(x => new CombinedEntry { Price = x.Key, Quantity = x.Sum(y => y.Quantity) }).ToArray(),
                     bids.Select(x => new CombinedEntry { Price = x.Key, Quantity = x.Sum(y => y.Quantity) }).ToArray()
                     ));
@@ -518,16 +582,20 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Asset client
-        GetAssetsOptions IAssetsRestClient.GetAssetsOptions { get; }
-            = new GetAssetsOptions(_exchangeName, false);
+        Task<HttpResult<SharedAsset[]>> IAssetsRestClient.GetAssetsAsync(GetAssetsRequest request, CancellationToken ct)
+            => GetAllAssetsAsync(request, ct);
+        GetAllAssetsOptions IAssetsRestClient.GetAssetsOptions => GetAllAssetsOptions;
 
-        async Task<HttpResult<SharedAsset[]>> IAssetsRestClient.GetAssetsAsync(GetAssetsRequest request, CancellationToken ct)
+        public GetAllAssetsOptions GetAllAssetsOptions { get; }
+            = new GetAllAssetsOptions(_exchangeName, false);
+
+        public async Task<HttpResult<SharedAsset[]>> GetAllAssetsAsync(GetAssetsRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetAssetsOptions.ValidateRequest(request, this);
+            var validationError = GetAllAssetsOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedAsset[]>(Exchange, validationError);
 
-            var assets = await ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
+            var assets = await _api.ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
             if (!assets.Success)
                 return HttpResult.Fail<SharedAsset[]>(assets);
 
@@ -543,14 +611,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetAssetOptions IAssetsRestClient.GetAssetOptions { get; } = new GetAssetOptions(_exchangeName, false);
-        async Task<HttpResult<SharedAsset>> IAssetsRestClient.GetAssetAsync(GetAssetRequest request, CancellationToken ct)
+        public GetAssetOptions GetAssetOptions { get; } = new GetAssetOptions(_exchangeName, false);
+        public async Task<HttpResult<SharedAsset>> GetAssetAsync(GetAssetRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetAssetOptions.ValidateRequest(request, this);
+            var validationError = GetAssetOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedAsset>(Exchange, validationError);
 
-            var assets = await ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
+            var assets = await _api.ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
             if (!assets.Success)
                 return HttpResult.Fail<SharedAsset>(assets);
 
@@ -581,13 +649,18 @@ namespace Lighter.Net.Clients.ExchangeApi
             };
         Task<HttpResult<SharedDepositAddress[]>> IDepositRestClient.GetDepositAddressesAsync(GetDepositAddressesRequest request, CancellationToken ct)
         {
-            return Task.FromResult(HttpResult.Fail<SharedDepositAddress[]>(ExchangeName, new InvalidOperationError("GetDepositAddresses is not support on " + _exchangeName)));
+            return Task.FromResult(HttpResult.Fail<SharedDepositAddress[]>(_exchangeName, new InvalidOperationError("GetDepositAddresses is not support on " + _exchangeName)));
         }
 
-        GetDepositsOptions IDepositRestClient.GetDepositsOptions { get; } = new GetDepositsOptions(_exchangeName, false, true, false, 100);
-        async Task<HttpResult<SharedDeposit[]>> IDepositRestClient.GetDepositsAsync(GetDepositsRequest request, PageRequest? pageRequest, CancellationToken ct)
+
+        Task<HttpResult<SharedDeposit[]>> IDepositRestClient.GetDepositsAsync(GetDepositsRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => GetDepositHistoryAsync(request, pageRequest, ct);
+        GetDepositHistoryOptions IDepositRestClient.GetDepositsOptions => GetDepositHistoryOptions;
+
+        public GetDepositHistoryOptions GetDepositHistoryOptions { get; } = new GetDepositHistoryOptions(_exchangeName, false, true, false, 100);
+        public async Task<HttpResult<SharedDeposit[]>> GetDepositHistoryAsync(GetDepositsRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetDepositsOptions.ValidateRequest(request, this);
+            var validationError = GetDepositHistoryOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedDeposit[]>(Exchange, validationError);
 
@@ -595,7 +668,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             var direction = DataDirection.Descending;
             var pageParams = Pagination.GetPaginationParameters(direction, limit, request.StartTime, request.EndTime ?? DateTime.UtcNow, pageRequest, true);
 
-            var assetsData = await ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
+            var assetsData = await _api.ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
             if (!assetsData.Success)
                 return HttpResult.Fail<SharedDeposit[]>(assetsData);
 
@@ -603,7 +676,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (request.Asset != null)
                 l1Address = assetsData.Data.SingleOrDefault(x => x.Symbol.Equals(request.Asset, StringComparison.InvariantCultureIgnoreCase))?.L1Address;
             
-            var result = await Account.GetDepositHistoryAsync(
+            var result = await _api.Account.GetDepositHistoryAsync(
                 l1Address: l1Address,
                 cursor: pageParams.Cursor,
                 ct: ct).ConfigureAwait(false);
@@ -648,10 +721,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Withdrawal client
 
-        GetWithdrawalsOptions IWithdrawalRestClient.GetWithdrawalsOptions { get; } = new GetWithdrawalsOptions(_exchangeName, false, true, false, 100);
-        async Task<HttpResult<SharedWithdrawal[]>> IWithdrawalRestClient.GetWithdrawalsAsync(GetWithdrawalsRequest request, PageRequest? pageRequest, CancellationToken ct)
+        Task<HttpResult<SharedWithdrawal[]>> IWithdrawalRestClient.GetWithdrawalsAsync(GetWithdrawalsRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => GetWithdrawalHistoryAsync(request, pageRequest, ct);
+        GetWithdrawalHistoryOptions IWithdrawalRestClient.GetWithdrawalsOptions => GetWithdrawalHistoryOptions;
+
+        public GetWithdrawalHistoryOptions GetWithdrawalHistoryOptions { get; } = new GetWithdrawalHistoryOptions(_exchangeName, false, true, false, 100);
+        public async Task<HttpResult<SharedWithdrawal[]>> GetWithdrawalHistoryAsync(GetWithdrawalsRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetWithdrawalsOptions.ValidateRequest(request, this);
+            var validationError = GetWithdrawalHistoryOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedWithdrawal[]>(Exchange, validationError);
 
@@ -659,11 +736,11 @@ namespace Lighter.Net.Clients.ExchangeApi
             var direction = DataDirection.Descending;
             var pageParams = Pagination.GetPaginationParameters(direction, limit, request.StartTime, request.EndTime ?? DateTime.UtcNow, pageRequest, true);
 
-            var assetsData = await ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
+            var assetsData = await _api.ExchangeData.GetAssetsAsync(ct: ct).ConfigureAwait(false);
             if (!assetsData.Success)
                 return HttpResult.Fail<SharedWithdrawal[]>(assetsData);
 
-            var result = await Account.GetWithdrawHistoryAsync(
+            var result = await _api.Account.GetWithdrawHistoryAsync(
                 ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedWithdrawal[]>(result);
@@ -708,16 +785,16 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Fee Client
-        GetFeeOptions IFeeRestClient.GetFeeOptions { get; } = new GetFeeOptions(_exchangeName, true);
+        public GetFeeOptions GetFeeOptions { get; } = new GetFeeOptions(_exchangeName, true);
 
-        async Task<HttpResult<SharedFee>> IFeeRestClient.GetFeesAsync(GetFeeRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedFee>> GetFeesAsync(GetFeeRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFeeOptions.ValidateRequest(request, this);
+            var validationError = GetFeeOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFee>(Exchange, validationError);
 
             // Get data
-            var result = await Account.GetAccountLimitsAsync(ct: ct).ConfigureAwait(false);
+            var result = await _api.Account.GetAccountLimitsAsync(ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedFee>(result);
 
@@ -728,20 +805,20 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Balance Client
-        GetBalancesOptions IBalanceRestClient.GetBalancesOptions { get; } = new GetBalancesOptions(_exchangeName, AccountTypeFilter.Futures, AccountTypeFilter.Spot);
+        public GetBalancesOptions GetBalancesOptions { get; } = new GetBalancesOptions(_exchangeName, AccountTypeFilter.Futures, AccountTypeFilter.Spot);
 
-        async Task<HttpResult<SharedBalance[]>> IBalanceRestClient.GetBalancesAsync(GetBalancesRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedBalance[]>> GetBalancesAsync(GetBalancesRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetBalancesOptions.ValidateRequest(request, this);
+            var validationError = GetBalancesOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedBalance[]>(Exchange, validationError);
 
-            var result = await Account.GetAccountsAsync(ct: ct).ConfigureAwait(false);
+            var result = await _api.Account.GetAccountsAsync(ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedBalance[]>(result);
 
             var tradingMode = request.TradingMode ?? TradingMode.Spot;
-            var account = result.Data.Accounts.Single(x => x.AccountIndex == ApiCredentials!.Credential.AccountIndex);
+            var account = result.Data.Accounts.Single(x => x.AccountIndex == _api.ApiCredentials!.Credential.AccountIndex);
 
             return HttpResult.Ok(result, account.Assets.Select(x =>
                 new SharedBalance(
@@ -756,28 +833,28 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Spot Order Client
 
-        SharedFeeDeductionType ISpotOrderRestClient.SpotFeeDeductionType => SharedFeeDeductionType.DeductFromOutput;
-        SharedFeeAssetType ISpotOrderRestClient.SpotFeeAssetType => SharedFeeAssetType.OutputAsset;
-        SharedOrderType[] ISpotOrderRestClient.SpotSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
-        SharedTimeInForce[] ISpotOrderRestClient.SpotSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
-        SharedQuantitySupport ISpotOrderRestClient.SpotSupportedOrderQuantity { get; } = new SharedQuantitySupport(
+        public SharedFeeDeductionType SpotFeeDeductionType => SharedFeeDeductionType.DeductFromOutput;
+        public SharedFeeAssetType SpotFeeAssetType => SharedFeeAssetType.OutputAsset;
+        public SharedOrderType[] SpotSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
+        public SharedTimeInForce[] SpotSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
+        public SharedQuantitySupport SpotSupportedOrderQuantity { get; } = new SharedQuantitySupport(
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset);
 
-        string ISpotOrderRestClient.GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
+        public string GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
 
-        PlaceSpotOrderOptions ISpotOrderRestClient.PlaceSpotOrderOptions { get; } = new PlaceSpotOrderOptions(_exchangeName)
+        public PlaceSpotOrderOptions PlaceSpotOrderOptions { get; } = new PlaceSpotOrderOptions(_exchangeName)
         {
-            RequiredOptionalParameters = new List<ParameterDescription>
+            RequiredRequestParameters = new List<ParameterDescription>
             {
                 new ParameterDescription(nameof(PlaceSpotOrderRequest.Price), typeof(decimal), "Price for the order. For market orders this should be the current symbol price to calculate max slippage", 21.5m)
             },
         };
-        async Task<HttpResult<SharedId>> ISpotOrderRestClient.PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedId>> PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.PlaceSpotOrderOptions.ValidateRequest(request, this);
+            var validationError = PlaceSpotOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
@@ -791,10 +868,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             }
             else
             {
-                cid = long.Parse(((ISpotOrderRestClient)SharedClient).GenerateClientOrderId());
+                cid = long.Parse(GenerateClientOrderId());
             }
 
-            var result = await Trading.PlaceOrderAsync(
+            var result = await _api.Trading.PlaceOrderAsync(
                 request.Symbol!.GetSymbol(FormatSymbol),
                 request.Side == SharedOrderSide.Buy ? Enums.OrderSide.Buy : Enums.OrderSide.Sell,
                 request.OrderType == SharedOrderType.Limit ? OrderType.Limit : OrderType.Market,
@@ -820,10 +897,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             return request.Price!.Value * 0.95m;
         }
 
-        GetSpotOrderOptions ISpotOrderRestClient.GetSpotOrderOptions { get; } = new GetSpotOrderOptions(_exchangeName, true);
-        async Task<HttpResult<SharedSpotOrder>> ISpotOrderRestClient.GetSpotOrderAsync(GetOrderRequest request, CancellationToken ct)
+        public GetSpotOrderOptions GetSpotOrderOptions { get; } = new GetSpotOrderOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedSpotOrder>> GetSpotOrderAsync(GetOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotOrderOptions.ValidateRequest(request, this);
+            var validationError = GetSpotOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotOrder>(Exchange, validationError);
 
@@ -831,14 +908,14 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedSpotOrder>(Exchange, ArgumentError.Invalid(nameof(GetOrderRequest.OrderId), "Invalid order id"));
 
             LighterOrder? orderInfo = null;
-            var openOrders = await Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var openOrders = await _api.Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!openOrders.Success)
                 return HttpResult.Fail<SharedSpotOrder>(openOrders);
 
             orderInfo = openOrders.Data.Orders.SingleOrDefault(x => x.OrderId == orderId || x.ClientOrderId == orderId);
             if (orderInfo == null)
             {
-                var closedOrders = await Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
+                var closedOrders = await _api.Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
                 if (!closedOrders.Success)
                     return HttpResult.Fail<SharedSpotOrder>(closedOrders);
                 orderInfo = closedOrders.Data.Orders.SingleOrDefault(x => x.OrderId == orderId || x.ClientOrderId == orderId);
@@ -848,8 +925,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedSpotOrder>(openOrders, new ServerError(ErrorType.UnknownOrder, "Order not found"));
 
             return HttpResult.Ok(openOrders, new SharedSpotOrder(
-                ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex)),
-                LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
+                ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex)),
+                LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
                 orderInfo.OrderId.ToString(),
                 ParseOrderType(orderInfo.OrderType),
                 orderInfo.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -868,23 +945,23 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetOpenSpotOrdersOptions ISpotOrderRestClient.GetOpenSpotOrdersOptions { get; }
+        public GetOpenSpotOrdersOptions GetOpenSpotOrdersOptions { get; }
             = new GetOpenSpotOrdersOptions(_exchangeName, true);
-        async Task<HttpResult<SharedSpotOrder[]>> ISpotOrderRestClient.GetOpenSpotOrdersAsync(GetOpenOrdersRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedSpotOrder[]>> GetOpenSpotOrdersAsync(GetOpenOrdersRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetOpenSpotOrdersOptions.ValidateRequest(request, this);
+            var validationError = GetOpenSpotOrdersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotOrder[]>(Exchange, validationError);
 
             var symbol = request.Symbol?.GetSymbol(FormatSymbol);
-            var orders = await Trading.GetOpenOrdersAsync(symbol: symbol, ct: ct).ConfigureAwait(false);
+            var orders = await _api.Trading.GetOpenOrdersAsync(symbol: symbol, ct: ct).ConfigureAwait(false);
             if (!orders.Success)
                 return HttpResult.Fail<SharedSpotOrder[]>(orders);
 
             var spotOrders = orders.Data.Orders.Where(x => x.MarketIndex >= 2048);
             return HttpResult.Ok(orders, spotOrders.Select(x => new SharedSpotOrder(
-                ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex)),
-                LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex) ?? string.Empty,
+                ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex)),
+                LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex) ?? string.Empty,
                 x.OrderIndex.ToString(),
                 ParseOrderType(x.OrderType),
                 x.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -903,10 +980,10 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetSpotClosedOrdersOptions ISpotOrderRestClient.GetClosedSpotOrdersOptions { get; } = new GetSpotClosedOrdersOptions(_exchangeName, false, true, false, 100);
-        async Task<HttpResult<SharedSpotOrder[]>> ISpotOrderRestClient.GetClosedSpotOrdersAsync(GetClosedOrdersRequest request, PageRequest? pageRequest, CancellationToken ct)
+        public GetSpotClosedOrdersOptions GetClosedSpotOrdersOptions { get; } = new GetSpotClosedOrdersOptions(_exchangeName, false, true, false, 100);
+        public async Task<HttpResult<SharedSpotOrder[]>> GetClosedSpotOrdersAsync(GetClosedOrdersRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetClosedSpotOrdersOptions.ValidateRequest(request, this);
+            var validationError = GetClosedSpotOrdersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotOrder[]>(Exchange, validationError);
 
@@ -919,7 +996,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 pageRequest);
 
             // Get data
-            var orders = await Trading.GetClosedOrdersAsync(
+            var orders = await _api.Trading.GetClosedOrdersAsync(
                 symbol: symbol,
                 limit: limit,
                 cursor: pageParams.Cursor,
@@ -938,8 +1015,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return HttpResult.Ok(orders, ExchangeHelpers.ApplyFilter(spotOrders, x => x.CreateTime, request.StartTime, request.EndTime, direction)
                     .Select(x => new SharedSpotOrder(
-                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex)),
-                        LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex) ?? string.Empty,
+                        ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex)),
+                        LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex) ?? string.Empty,
                         x.OrderIndex.ToString(),
                         ParseOrderType(x.OrderType),
                         x.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -958,42 +1035,46 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetSpotOrderTradesOptions ISpotOrderRestClient.GetSpotOrderTradesOptions { get; }
+        public GetSpotOrderTradesOptions GetSpotOrderTradesOptions { get; }
             = new GetSpotOrderTradesOptions(_exchangeName, true);
-        async Task<HttpResult<SharedUserTrade[]>> ISpotOrderRestClient.GetSpotOrderTradesAsync(GetOrderTradesRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedUserTrade[]>> GetSpotOrderTradesAsync(GetOrderTradesRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotOrderTradesOptions.ValidateRequest(request, this);
+            var validationError = GetSpotOrderTradesOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedUserTrade[]>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return HttpResult.Fail<SharedUserTrade[]>(Exchange, ArgumentError.Invalid(nameof(GetOrderTradesRequest.OrderId), "Invalid order id"));
 
-            var orders = await Trading.GetUserTradesAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
+            var orders = await _api.Trading.GetUserTradesAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
             if (!orders.Success)
                 return HttpResult.Fail<SharedUserTrade[]>(orders);
 
             return HttpResult.Ok(orders, orders.Data!.Trades.Select(x => new SharedUserTrade(
                 request.Symbol,
-                LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
+                LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
                 request.OrderId,
                 x.TradeId.ToString(),
-                x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                x.AskAccountId == _api.ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                 new SharedOrderQuantity(x.Quantity),
                 x.Price,
                 x.Timestamp)
             {
-                ClientOrderId = (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                Fee = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
-                Role = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
+                ClientOrderId = (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
+                Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials!.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials!.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
             }).ToArray());
 
         }
 
-        GetSpotUserTradesOptions ISpotOrderRestClient.GetSpotUserTradesOptions { get; } = new GetSpotUserTradesOptions(_exchangeName, false, true, false, 100);
-        async Task<HttpResult<SharedUserTrade[]>> ISpotOrderRestClient.GetSpotUserTradesAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
+        Task<HttpResult<SharedUserTrade[]>> ISpotOrderRestClient.GetSpotUserTradesAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => GetSpotUserTradeHistoryAsync(request, pageRequest, ct);
+        GetSpotUserTradeHistoryOptions ISpotOrderRestClient.GetSpotUserTradesOptions => GetSpotUserTradeHistoryOptions;
+
+        public GetSpotUserTradeHistoryOptions GetSpotUserTradeHistoryOptions { get; } = new GetSpotUserTradeHistoryOptions(_exchangeName, false, true, false, 100);
+        public async Task<HttpResult<SharedUserTrade[]>> GetSpotUserTradeHistoryAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotUserTradesOptions.ValidateRequest(request, this);
+            var validationError = GetSpotUserTradeHistoryOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedUserTrade[]>(Exchange, validationError);
 
@@ -1006,7 +1087,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 pageRequest);
 
             // Get data
-            var result = await Trading.GetUserTradesAsync(
+            var result = await _api.Trading.GetUserTradesAsync(
                 symbol: symbol,
                 limit: limit,
                 cursor: pageParams.Cursor,
@@ -1027,33 +1108,33 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result, ExchangeHelpers.ApplyFilter(spotTrades, x => x.Timestamp, request.StartTime, request.EndTime, direction)
                     .Select(x => new SharedUserTrade(
                         request.Symbol,
-                        LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
-                        (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
+                        LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
+                        (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                         x.TradeId.ToString(),
-                        x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                        x.AskAccountId == _api.ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                         new SharedOrderQuantity(x.Quantity),
                         x.Price,
                         x.Timestamp)
                     {
-                        ClientOrderId = (x.BidAccountId == ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                        Fee = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
-                        Role = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
+                        ClientOrderId = (x.BidAccountId == _api.ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
+                        Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                        Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
                     }).ToArray(), nextPageRequest);
 
         }
 
-        CancelSpotOrderOptions ISpotOrderRestClient.CancelSpotOrderOptions { get; }
+        public CancelSpotOrderOptions CancelSpotOrderOptions { get; }
             = new CancelSpotOrderOptions(_exchangeName, true);
-        async Task<HttpResult<SharedId>> ISpotOrderRestClient.CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedId>> CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.CancelSpotOrderOptions.ValidateRequest(request, this);
+            var validationError = CancelSpotOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return HttpResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
 
-            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
+            var order = await _api.Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
             if (!order.Success)
                 return HttpResult.Fail<SharedId>(order);
 
@@ -1123,11 +1204,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Spot Client Id Order Client
 
-        GetSpotOrderByClientOrderIdOptions ISpotOrderClientIdRestClient.GetSpotOrderByClientOrderIdOptions { get; }
+        public GetSpotOrderByClientOrderIdOptions GetSpotOrderByClientOrderIdOptions { get; }
             = new GetSpotOrderByClientOrderIdOptions(_exchangeName, true);
-        async Task<HttpResult<SharedSpotOrder>> ISpotOrderClientIdRestClient.GetSpotOrderByClientOrderIdAsync(GetOrderRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedSpotOrder>> GetSpotOrderByClientOrderIdAsync(GetOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetSpotOrderByClientOrderIdOptions.ValidateRequest(request, this);
+            var validationError = GetSpotOrderByClientOrderIdOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedSpotOrder>(Exchange, validationError);
 
@@ -1135,14 +1216,14 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedSpotOrder>(Exchange, ArgumentError.Invalid(nameof(GetOrderRequest.OrderId), "Invalid order id"));
 
             LighterOrder? orderInfo = null;
-            var openOrders = await Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var openOrders = await _api.Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!openOrders.Success)
                 return HttpResult.Fail<SharedSpotOrder>(openOrders);
 
             orderInfo = openOrders.Data.Orders.SingleOrDefault(x => x.ClientOrderId == orderId);
             if (orderInfo == null)
             {
-                var closedOrders = await Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
+                var closedOrders = await _api.Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
                 if (!closedOrders.Success)
                     return HttpResult.Fail<SharedSpotOrder>(closedOrders);
                 orderInfo = closedOrders.Data.Orders.SingleOrDefault(x => x.ClientOrderId == orderId);
@@ -1152,8 +1233,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedSpotOrder>(openOrders, new ServerError(ErrorType.UnknownOrder, "Order not found"));
 
             return HttpResult.Ok(openOrders, new SharedSpotOrder(
-                ExchangeSymbolCache.ParseSymbol(_topicSpotId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex)),
-                LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
+                ExchangeSymbolCache.ParseSymbol(_topicSpotId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex)),
+                LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
                 orderInfo.OrderId.ToString(),
                 ParseOrderType(orderInfo.OrderType),
                 orderInfo.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -1171,18 +1252,18 @@ namespace Lighter.Net.Clients.ExchangeApi
             });
         }
 
-        CancelSpotOrderByClientOrderIdOptions ISpotOrderClientIdRestClient.CancelSpotOrderByClientOrderIdOptions { get; }
+        public CancelSpotOrderByClientOrderIdOptions CancelSpotOrderByClientOrderIdOptions { get; }
             = new CancelSpotOrderByClientOrderIdOptions(_exchangeName, true);
-        async Task<HttpResult<SharedId>> ISpotOrderClientIdRestClient.CancelSpotOrderByClientOrderIdAsync(CancelOrderRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedId>> CancelSpotOrderByClientOrderIdAsync(CancelOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.CancelSpotOrderByClientOrderIdOptions.ValidateRequest(request, this);
+            var validationError = CancelSpotOrderByClientOrderIdOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return HttpResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
 
-            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
+            var order = await _api.Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
             if (!order.Success)
                 return HttpResult.Fail<SharedId>(order);
 
@@ -1193,23 +1274,21 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Order Client
 
-        SharedFeeDeductionType IFuturesOrderRestClient.FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
-        SharedFeeAssetType IFuturesOrderRestClient.FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
+        public SharedFeeDeductionType FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
+        public SharedFeeAssetType FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
 
-        SharedOrderType[] IFuturesOrderRestClient.FuturesSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
-        SharedTimeInForce[] IFuturesOrderRestClient.FuturesSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
-        SharedQuantitySupport IFuturesOrderRestClient.FuturesSupportedOrderQuantity { get; } = new SharedQuantitySupport(
+        public SharedOrderType[] FuturesSupportedOrderTypes { get; } = new[] { SharedOrderType.Limit, SharedOrderType.Market, SharedOrderType.LimitMaker };
+        public SharedTimeInForce[] FuturesSupportedTimeInForce { get; } = new[] { SharedTimeInForce.GoodTillCanceled, SharedTimeInForce.ImmediateOrCancel };
+        public SharedQuantitySupport FuturesSupportedOrderQuantity { get; } = new SharedQuantitySupport(
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset,
                 SharedQuantityType.BaseAsset);
 
-        string IFuturesOrderRestClient.GenerateClientOrderId() => ExchangeHelpers.RandomLong(9).ToString();
-
-        PlaceFuturesOrderOptions IFuturesOrderRestClient.PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderOptions(_exchangeName, false);
-        async Task<HttpResult<SharedId>> IFuturesOrderRestClient.PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
+        public PlaceFuturesOrderOptions PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderOptions(_exchangeName, false);
+        public async Task<HttpResult<SharedId>> PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.PlaceFuturesOrderOptions.ValidateRequest(request, this);
+            var validationError = PlaceFuturesOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
@@ -1223,10 +1302,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             }
             else
             {
-                cid = long.Parse(((IFuturesOrderRestClient)SharedClient).GenerateClientOrderId());
+                cid = long.Parse(GenerateClientOrderId());
             }
 
-            var result = await Trading.PlaceOrderAsync(
+            var result = await _api.Trading.PlaceOrderAsync(
                 request.Symbol!.GetSymbol(FormatSymbol),
                 request.Side == SharedOrderSide.Buy ? Enums.OrderSide.Buy : Enums.OrderSide.Sell,
                 request.OrderType == SharedOrderType.Limit ? OrderType.Limit : OrderType.Market,
@@ -1252,10 +1331,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             return request.Price!.Value * 0.95m;
         }
 
-        GetFuturesOrderOptions IFuturesOrderRestClient.GetFuturesOrderOptions { get; } = new GetFuturesOrderOptions(_exchangeName, true);
-        async Task<HttpResult<SharedFuturesOrder>> IFuturesOrderRestClient.GetFuturesOrderAsync(GetOrderRequest request, CancellationToken ct)
+        public GetFuturesOrderOptions GetFuturesOrderOptions { get; } = new GetFuturesOrderOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedFuturesOrder>> GetFuturesOrderAsync(GetOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFuturesOrderOptions.ValidateRequest(request, this);
+            var validationError = GetFuturesOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesOrder>(Exchange, validationError);
 
@@ -1263,14 +1342,14 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedFuturesOrder>(Exchange, ArgumentError.Invalid(nameof(GetOrderRequest.OrderId), "Invalid order id"));
 
             LighterOrder? orderInfo = null;
-            var openOrders = await Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var openOrders = await _api.Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!openOrders.Success)
                 return HttpResult.Fail<SharedFuturesOrder>(openOrders);
 
             orderInfo = openOrders.Data.Orders.SingleOrDefault(x => x.OrderId == orderId || x.ClientOrderId == orderId);
             if (orderInfo == null)
             {
-                var closedOrders = await Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
+                var closedOrders = await _api.Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
                 if (!closedOrders.Success)
                     return HttpResult.Fail<SharedFuturesOrder>(closedOrders);
                 orderInfo = closedOrders.Data.Orders.SingleOrDefault(x => x.OrderId == orderId || x.ClientOrderId == orderId);
@@ -1280,8 +1359,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedFuturesOrder>(openOrders, new ServerError(ErrorType.UnknownOrder, "Order not found"));
 
             return HttpResult.Ok(openOrders, new SharedFuturesOrder(
-                ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex)),
-                LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
+                ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex)),
+                LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
                 orderInfo.OrderId.ToString(),
                 ParseOrderType(orderInfo.OrderType),
                 orderInfo.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -1301,22 +1380,22 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetOpenFuturesOrdersOptions IFuturesOrderRestClient.GetOpenFuturesOrdersOptions { get; } = new GetOpenFuturesOrdersOptions(_exchangeName, true);
-        async Task<HttpResult<SharedFuturesOrder[]>> IFuturesOrderRestClient.GetOpenFuturesOrdersAsync(GetOpenOrdersRequest request, CancellationToken ct)
+        public GetOpenFuturesOrdersOptions GetOpenFuturesOrdersOptions { get; } = new GetOpenFuturesOrdersOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedFuturesOrder[]>> GetOpenFuturesOrdersAsync(GetOpenOrdersRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetOpenFuturesOrdersOptions.ValidateRequest(request, this);
+            var validationError = GetOpenFuturesOrdersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesOrder[]>(Exchange, validationError);
 
             var symbol = request.Symbol?.GetSymbol(FormatSymbol);
-            var orders = await Trading.GetOpenOrdersAsync(symbol: symbol, ct: ct).ConfigureAwait(false);
+            var orders = await _api.Trading.GetOpenOrdersAsync(symbol: symbol, ct: ct).ConfigureAwait(false);
             if (!orders.Success)
                 return HttpResult.Fail<SharedFuturesOrder[]>(orders);
 
             var futuresOrders = orders.Data.Orders.Where(x => x.MarketIndex < 2048);
             return HttpResult.Ok(orders, futuresOrders.Select(x => new SharedFuturesOrder(
-                ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex)),
-                LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex) ?? string.Empty,
+                ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex)),
+                LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex) ?? string.Empty,
                 x.OrderIndex.ToString(),
                 ParseOrderType(x.OrderType),
                 x.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -1336,10 +1415,10 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetFuturesClosedOrdersOptions IFuturesOrderRestClient.GetClosedFuturesOrdersOptions { get; } = new GetFuturesClosedOrdersOptions(_exchangeName, true, true, true, 100);
-        async Task<HttpResult<SharedFuturesOrder[]>> IFuturesOrderRestClient.GetClosedFuturesOrdersAsync(GetClosedOrdersRequest request, PageRequest? pageRequest, CancellationToken ct)
+        public GetFuturesClosedOrdersOptions GetClosedFuturesOrdersOptions { get; } = new GetFuturesClosedOrdersOptions(_exchangeName, true, true, true, 100);
+        public async Task<HttpResult<SharedFuturesOrder[]>> GetClosedFuturesOrdersAsync(GetClosedOrdersRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetClosedFuturesOrdersOptions.ValidateRequest(request, this);
+            var validationError = GetClosedFuturesOrdersOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesOrder[]>(Exchange, validationError);
 
@@ -1352,7 +1431,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 pageRequest);
 
             // Get data
-            var orders = await Trading.GetClosedOrdersAsync(
+            var orders = await _api.Trading.GetClosedOrdersAsync(
                 symbol: symbol,
                 limit: limit,
                 cursor: pageParams.Cursor,
@@ -1371,8 +1450,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return HttpResult.Ok(orders, ExchangeHelpers.ApplyFilter(futuresOrders, x => x.CreateTime, request.StartTime, request.EndTime, direction)
                     .Select(x => new SharedFuturesOrder(
-                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex)),
-                        LighterUtils.GetSymbolName(EnvironmentName, x.MarketIndex) ?? string.Empty,
+                        ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex)),
+                        LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketIndex) ?? string.Empty,
                         x.OrderIndex.ToString(),
                         ParseOrderType(x.OrderType),
                         x.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -1391,41 +1470,45 @@ namespace Lighter.Net.Clients.ExchangeApi
                     }).ToArray(), nextPageRequest);
         }
 
-        GetFuturesOrderTradesOptions IFuturesOrderRestClient.GetFuturesOrderTradesOptions { get; } = new GetFuturesOrderTradesOptions(_exchangeName, true);
-        async Task<HttpResult<SharedUserTrade[]>> IFuturesOrderRestClient.GetFuturesOrderTradesAsync(GetOrderTradesRequest request, CancellationToken ct)
+        public GetFuturesOrderTradesOptions GetFuturesOrderTradesOptions { get; } = new GetFuturesOrderTradesOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedUserTrade[]>> GetFuturesOrderTradesAsync(GetOrderTradesRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFuturesOrderTradesOptions.ValidateRequest(request, this);
+            var validationError = GetFuturesOrderTradesOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedUserTrade[]>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return HttpResult.Fail<SharedUserTrade[]>(Exchange, ArgumentError.Invalid(nameof(GetOrderTradesRequest.OrderId), "Invalid order id"));
 
-            var orders = await Trading.GetUserTradesAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
+            var orders = await _api.Trading.GetUserTradesAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
             if (!orders.Success)
                 return HttpResult.Fail<SharedUserTrade[]>(orders);
 
             return HttpResult.Ok(orders, orders.Data!.Trades.Select(x => new SharedUserTrade(
                 request.Symbol,
-                LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
+                LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
                 request.OrderId,
                 x.TradeId.ToString(),
-                x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                x.AskAccountId == _api.ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                 new SharedOrderQuantity(x.Quantity),
                 x.Price,
                 x.Timestamp)
             {
-                ClientOrderId = (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                Fee = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
-                Role = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
+                ClientOrderId = (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
+                Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
             }).ToArray());
 
         }
 
-        GetFuturesUserTradesOptions IFuturesOrderRestClient.GetFuturesUserTradesOptions { get; } = new GetFuturesUserTradesOptions(_exchangeName, true, true, true, 100);
-        async Task<HttpResult<SharedUserTrade[]>> IFuturesOrderRestClient.GetFuturesUserTradesAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
+        Task<HttpResult<SharedUserTrade[]>> IFuturesOrderRestClient.GetFuturesUserTradesAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => GetFuturesUserTradeHistoryAsync(request, pageRequest, ct);
+        GetFuturesUserTradeHistoryOptions IFuturesOrderRestClient.GetFuturesUserTradesOptions => GetFuturesUserTradeHistoryOptions;
+
+        public GetFuturesUserTradeHistoryOptions GetFuturesUserTradeHistoryOptions { get; } = new GetFuturesUserTradeHistoryOptions(_exchangeName, true, true, true, 100);
+        public async Task<HttpResult<SharedUserTrade[]>> GetFuturesUserTradeHistoryAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFuturesUserTradesOptions.ValidateRequest(request, this);
+            var validationError = GetFuturesUserTradeHistoryOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedUserTrade[]>(Exchange, validationError);
 
@@ -1438,7 +1521,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 pageRequest);
 
             // Get data
-            var result = await Trading.GetUserTradesAsync(
+            var result = await _api.Trading.GetUserTradesAsync(
                 symbol: symbol,
                 limit: limit,
                 cursor: pageParams.Cursor,
@@ -1459,32 +1542,32 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result, ExchangeHelpers.ApplyFilter(futuresTrades, x => x.Timestamp, request.StartTime, request.EndTime, direction)
                     .Select(x => new SharedUserTrade(
                         request.Symbol,
-                        LighterUtils.GetSymbolName(EnvironmentName, x.MarketId) ?? string.Empty,
-                        (x.BidAccountId == ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
+                        LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
+                        (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
                         x.TradeId.ToString(),
-                        x.AskAccountId == ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                        x.AskAccountId == _api.ApiCredentials!.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
                         new SharedOrderQuantity(x.Quantity),
                         x.Price,
                         x.Timestamp)
                     {
-                        ClientOrderId = (x.BidAccountId == ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                        Fee = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
-                        Role = x.IsMakerAsk == (x.AskAccountId == ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
+                        ClientOrderId = (x.BidAccountId == _api.ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
+                        Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                        Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
                     }).ToArray(), nextPageRequest);
 
         }
 
-        CancelFuturesOrderOptions IFuturesOrderRestClient.CancelFuturesOrderOptions { get; } = new CancelFuturesOrderOptions(_exchangeName, true);
-        async Task<HttpResult<SharedId>> IFuturesOrderRestClient.CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
+        public CancelFuturesOrderOptions CancelFuturesOrderOptions { get; } = new CancelFuturesOrderOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedId>> CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.CancelFuturesOrderOptions.ValidateRequest(request, this);
+            var validationError = CancelFuturesOrderOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return HttpResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
 
-            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
+            var order = await _api.Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderId, ct: ct).ConfigureAwait(false);
             if (!order.Success)
                 return HttpResult.Fail<SharedId>(order);
 
@@ -1492,22 +1575,22 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        GetPositionsOptions IFuturesOrderRestClient.GetPositionsOptions { get; } = new GetPositionsOptions(_exchangeName, true);
-        async Task<HttpResult<SharedPosition[]>> IFuturesOrderRestClient.GetPositionsAsync(GetPositionsRequest request, CancellationToken ct)
+        public GetPositionsOptions GetPositionsOptions { get; } = new GetPositionsOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedPosition[]>> GetPositionsAsync(GetPositionsRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetPositionsOptions.ValidateRequest(request, this);
+            var validationError = GetPositionsOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedPosition[]>(Exchange, validationError);
 
-            var result = await Account.GetAccountsAsync(ct: ct).ConfigureAwait(false);
+            var result = await _api.Account.GetAccountsAsync(ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedPosition[]>(result);
 
-            var account = result.Data.Accounts.Single(x => x.AccountIndex == ApiCredentials!.Credential!.AccountIndex);
+            var account = result.Data.Accounts.Single(x => x.AccountIndex == _api.ApiCredentials!.Credential!.AccountIndex);
 
             return HttpResult.Ok(result, account.Positions.Select(x =>
                 new SharedPosition(
-                    ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, x.Symbol),
+                    ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, x.Symbol),
                     x.Symbol,
                     new SharedOrderQuantity(Math.Abs(x.Position)),
                     null)
@@ -1521,9 +1604,9 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        ClosePositionOptions IFuturesOrderRestClient.ClosePositionOptions { get; } = new ClosePositionOptions(_exchangeName, true)
+        public ClosePositionOptions ClosePositionOptions { get; } = new ClosePositionOptions(_exchangeName, true)
         {
-            RequiredOptionalParameters = new List<ParameterDescription>
+            RequiredRequestParameters = new List<ParameterDescription>
             {
                 new ParameterDescription(nameof(ClosePositionRequest.PositionSide), typeof(SharedPositionSide), "The position side to close", SharedPositionSide.Long),
                 new ParameterDescription(nameof(ClosePositionRequest.Quantity), typeof(decimal), "Quantity of the position is required", 0.1m)
@@ -1533,16 +1616,16 @@ namespace Lighter.Net.Clients.ExchangeApi
                 new ParameterDescription("Price", typeof(decimal), "The current price of the symbol. Required to calculate max slippage.", 21.5m)
             },
         };
-        async Task<HttpResult<SharedId>> IFuturesOrderRestClient.ClosePositionAsync(ClosePositionRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedId>> ClosePositionAsync(ClosePositionRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.ClosePositionOptions.ValidateRequest(request, this);
+            var validationError = ClosePositionOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
-            long cid = long.Parse(((IFuturesOrderRestClient)SharedClient).GenerateClientOrderId());
+            long cid = long.Parse(GenerateClientOrderId());
 
             var symbol = request.Symbol!.GetSymbol(FormatSymbol);
-            var result = await Trading.PlaceOrderAsync(
+            var result = await _api.Trading.PlaceOrderAsync(
                 symbol,
                 request.PositionSide == SharedPositionSide.Long ? OrderSide.Sell : OrderSide.Buy,
                 OrderType.Market,
@@ -1571,10 +1654,10 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Futures Client Id Order Client
 
-        GetFuturesOrderByClientOrderIdOptions IFuturesOrderClientIdRestClient.GetFuturesOrderByClientOrderIdOptions { get; } = new GetFuturesOrderByClientOrderIdOptions(_exchangeName, true);
-        async Task<HttpResult<SharedFuturesOrder>> IFuturesOrderClientIdRestClient.GetFuturesOrderByClientOrderIdAsync(GetOrderRequest request, CancellationToken ct)
+        public GetFuturesOrderByClientOrderIdOptions GetFuturesOrderByClientOrderIdOptions { get; } = new GetFuturesOrderByClientOrderIdOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedFuturesOrder>> GetFuturesOrderByClientOrderIdAsync(GetOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFuturesOrderByClientOrderIdOptions.ValidateRequest(request, this);
+            var validationError = GetFuturesOrderByClientOrderIdOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFuturesOrder>(Exchange, validationError);
 
@@ -1582,14 +1665,14 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedFuturesOrder>(Exchange, ArgumentError.Invalid(nameof(GetOrderRequest.OrderId), "Invalid order id"));
 
             LighterOrder? orderInfo = null;
-            var openOrders = await Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var openOrders = await _api.Trading.GetOpenOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!openOrders.Success)
                 return HttpResult.Fail<SharedFuturesOrder>(openOrders);
 
             orderInfo = openOrders.Data.Orders.SingleOrDefault(x => x.ClientOrderId == orderId);
             if (orderInfo == null)
             {
-                var closedOrders = await Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
+                var closedOrders = await _api.Trading.GetClosedOrdersAsync(symbol: request.Symbol!.GetSymbol(FormatSymbol), limit: 100, ct: ct).ConfigureAwait(false);
                 if (!closedOrders.Success)
                     return HttpResult.Fail<SharedFuturesOrder>(closedOrders);
                 orderInfo = closedOrders.Data.Orders.SingleOrDefault(x => x.ClientOrderId == orderId);
@@ -1599,8 +1682,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 return HttpResult.Fail<SharedFuturesOrder>(openOrders, new ServerError(ErrorType.UnknownOrder, "Order not found"));
 
             return HttpResult.Ok(openOrders, new SharedFuturesOrder(
-                ExchangeSymbolCache.ParseSymbol(_topicFuturesId, EnvironmentName, null, LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex)),
-                LighterUtils.GetSymbolName(EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
+                ExchangeSymbolCache.ParseSymbol(_topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex)),
+                LighterUtils.GetSymbolName(_api.EnvironmentName, orderInfo.MarketIndex) ?? string.Empty,
                 orderInfo.OrderId.ToString(),
                 ParseOrderType(orderInfo.OrderType),
                 orderInfo.IsAsk ? SharedOrderSide.Sell : SharedOrderSide.Buy,
@@ -1620,17 +1703,17 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
-        CancelFuturesOrderByClientOrderIdOptions IFuturesOrderClientIdRestClient.CancelFuturesOrderByClientOrderIdOptions { get; } = new CancelFuturesOrderByClientOrderIdOptions(_exchangeName, true);
-        async Task<HttpResult<SharedId>> IFuturesOrderClientIdRestClient.CancelFuturesOrderByClientOrderIdAsync(CancelOrderRequest request, CancellationToken ct)
+        public CancelFuturesOrderByClientOrderIdOptions CancelFuturesOrderByClientOrderIdOptions { get; } = new CancelFuturesOrderByClientOrderIdOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedId>> CancelFuturesOrderByClientOrderIdAsync(CancelOrderRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.CancelFuturesOrderByClientOrderIdOptions.ValidateRequest(request, this);
+            var validationError = CancelFuturesOrderByClientOrderIdOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedId>(Exchange, validationError);
 
             if (!long.TryParse(request.OrderId, out var orderId))
                 return HttpResult.Fail<SharedId>(Exchange, ArgumentError.Invalid(nameof(CancelOrderRequest.OrderId), "Invalid order id"));
 
-            var order = await Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
+            var order = await _api.Trading.CancelOrderAsync(request.Symbol!.GetSymbol(FormatSymbol), orderIndex: orderId, ct: ct).ConfigureAwait(false);
             if (!order.Success)
                 return HttpResult.Fail<SharedId>(order);
 
@@ -1640,20 +1723,20 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Leverage client
-        SharedLeverageSettingMode ILeverageRestClient.LeverageSettingType => SharedLeverageSettingMode.PerSymbol;
+        public SharedLeverageSettingMode LeverageSettingType => SharedLeverageSettingMode.PerSymbol;
 
-        GetLeverageOptions ILeverageRestClient.GetLeverageOptions { get; } = new GetLeverageOptions(_exchangeName, true);
-        async Task<HttpResult<SharedLeverage>> ILeverageRestClient.GetLeverageAsync(GetLeverageRequest request, CancellationToken ct)
+        public GetLeverageOptions GetLeverageOptions { get; } = new GetLeverageOptions(_exchangeName, true);
+        public async Task<HttpResult<SharedLeverage>> GetLeverageAsync(GetLeverageRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetLeverageOptions.ValidateRequest(request, this);
+            var validationError = GetLeverageOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedLeverage>(Exchange, validationError);
 
-            var result = await Account.GetAccountsAsync().ConfigureAwait(false);
+            var result = await _api.Account.GetAccountsAsync().ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedLeverage>(result);
 
-            var account = result.Data.Accounts.Single(x => x.AccountIndex == ApiCredentials!.Credential!.AccountIndex);
+            var account = result.Data.Accounts.Single(x => x.AccountIndex == _api.ApiCredentials!.Credential!.AccountIndex);
             var position = account.Positions.SingleOrDefault(x => x.Symbol.Equals(request.Symbol!.GetSymbol(FormatSymbol), StringComparison.InvariantCultureIgnoreCase));
             if (position == null)
                 return HttpResult.Fail<SharedLeverage>(Exchange, new ServerError(new ErrorInfo(ErrorType.Unknown, false, "Position not found")));
@@ -1661,20 +1744,20 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result, new SharedLeverage(100 / position.InitialMarginFraction));
         }
 
-        SetLeverageOptions ILeverageRestClient.SetLeverageOptions { get; } = new SetLeverageOptions(_exchangeName)
+        public SetLeverageOptions SetLeverageOptions { get; } = new SetLeverageOptions(_exchangeName)
         {
-            RequiredOptionalParameters = new List<ParameterDescription>
+            RequiredRequestParameters = new List<ParameterDescription>
             {
                 new ParameterDescription(nameof(SetLeverageRequest.MarginMode), typeof(SharedMarginMode), "The margin mode to change leverage for", SharedMarginMode.Cross)
             }
         };
-        async Task<HttpResult<SharedLeverage>> ILeverageRestClient.SetLeverageAsync(SetLeverageRequest request, CancellationToken ct)
+        public async Task<HttpResult<SharedLeverage>> SetLeverageAsync(SetLeverageRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.SetLeverageOptions.ValidateRequest(request, this);
+            var validationError = SetLeverageOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedLeverage>(Exchange, validationError);
 
-            var result = await Account.SetLeverageAsync(
+            var result = await _api.Account.SetLeverageAsync(
                 symbol: request.Symbol!.GetSymbol(FormatSymbol), 
                 (int)request.Leverage, 
                 request.MarginMode == SharedMarginMode.Isolated ? MarginMode.IsolatedMargin : MarginMode.CrossMargin,
@@ -1689,14 +1772,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         #region Open Interest client
 
-        GetOpenInterestOptions IOpenInterestRestClient.GetOpenInterestOptions { get; } = new GetOpenInterestOptions(_exchangeName, false);
-        async Task<HttpResult<SharedOpenInterest>> IOpenInterestRestClient.GetOpenInterestAsync(GetOpenInterestRequest request, CancellationToken ct)
+        public GetOpenInterestOptions GetOpenInterestOptions { get; } = new GetOpenInterestOptions(_exchangeName, false);
+        public async Task<HttpResult<SharedOpenInterest>> GetOpenInterestAsync(GetOpenInterestRequest request, CancellationToken ct)
         {
-            var validationError = SharedClient.GetOpenInterestOptions.ValidateRequest(request, this);
+            var validationError = GetOpenInterestOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedOpenInterest>(Exchange, validationError);
 
-            var result = await ExchangeData.GetSymbolDetailsAsync(request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
+            var result = await _api.ExchangeData.GetSymbolDetailsAsync(request.Symbol!.GetSymbol(FormatSymbol), ct: ct).ConfigureAwait(false);
             if (!result.Success)
                 return HttpResult.Fail<SharedOpenInterest>(result);
 
@@ -1710,7 +1793,7 @@ namespace Lighter.Net.Clients.ExchangeApi
         #endregion
 
         #region Funding Rate client
-        GetFundingRateHistoryOptions IFundingRateRestClient.GetFundingRateHistoryOptions { get; } = 
+        public GetFundingRateHistoryOptions GetFundingRateHistoryOptions { get; } = 
             new GetFundingRateHistoryOptions(_exchangeName, false, true, true, 100, false)
             {
                 OptionalExchangeParameters = new List<ParameterDescription>
@@ -1719,9 +1802,9 @@ namespace Lighter.Net.Clients.ExchangeApi
                 }
             };
 
-        async Task<HttpResult<SharedFundingRate[]>> IFundingRateRestClient.GetFundingRateHistoryAsync(GetFundingRateHistoryRequest request, PageRequest? pageRequest, CancellationToken ct)
+        public async Task<HttpResult<SharedFundingRate[]>> GetFundingRateHistoryAsync(GetFundingRateHistoryRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
-            var validationError = SharedClient.GetFundingRateHistoryOptions.ValidateRequest(request, this);
+            var validationError = GetFundingRateHistoryOptions.ValidateRequest(request, this);
             if (validationError != null)
                 return HttpResult.Fail<SharedFundingRate[]>(Exchange, validationError);
 
@@ -1730,7 +1813,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             var pageParams = Pagination.GetPaginationParameters(direction, limit, request.StartTime, request.EndTime ?? DateTime.UtcNow, pageRequest, false);
 
             // Get data
-            var result = await ExchangeData.GetFundingRateHistoryAsync(
+            var result = await _api.ExchangeData.GetFundingRateHistoryAsync(
                 request.Symbol!.GetSymbol(FormatSymbol),
                 request.GetParamValue<FundingResolution?>(_exchangeName, "Resolution") ?? FundingResolution.OneHour,
                 startTime: pageParams.StartTime,

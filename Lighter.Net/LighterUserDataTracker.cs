@@ -18,12 +18,17 @@ namespace Lighter.Net
             string? userIdentifier,
             SpotUserDataTrackerConfig? config = null) : base(
                 logger,
-                restClient.ExchangeApi.SharedClient,
-                restClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
-                restClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
+                restClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
                 userIdentifier,
                 config ?? new SpotUserDataTrackerConfig())
         {
@@ -46,13 +51,20 @@ namespace Lighter.Net
             string? userIdentifier,
             FuturesUserDataTrackerConfig? config = null) :
             base(logger,
-                restClient.ExchangeApi.SharedClient,
-                restClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
-                restClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
-                socketClient.ExchangeApi.SharedClient,
+                restClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
+
+                restClient.ExchangeApi.SharedApi,
+                socketClient.ExchangeApi.SharedApi,
                 userIdentifier,
                 config ?? new FuturesUserDataTrackerConfig())
         {
