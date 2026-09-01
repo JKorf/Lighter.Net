@@ -2,7 +2,7 @@
 
 > Strongly typed .NET client library for the Lighter DEX REST and WebSocket APIs. Part of the CryptoExchange.Net ecosystem, with shared API abstractions for multi-exchange code.
 
-Lighter.Net provides typed access to Lighter public market data, account data, order management, transaction signing, WebSocket subscriptions, automatic WebSocket reconnection, client-side rate limiting, local order book support, account management helpers, and native AOT support. Current version: 1.5.0. Targets netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
+Lighter.Net provides typed access to Lighter public market data, account data, order management, transaction signing, WebSocket subscriptions, automatic WebSocket reconnection, client-side rate limiting, local order book support, account management helpers, and native AOT support. Current version: 1.5.1. Targets netstandard2.0, netstandard2.1, net8.0, net9.0, net10.0.
 
 REST methods return `HttpResult<T>` / `HttpResult`, local non-I/O helpers return `CallResult<T>`, WebSocket subscriptions return `WebSocketResult<UpdateSubscription>`, WebSocket request/transaction methods return `QueryResult<T>`, and shared non-I/O symbol/cache helpers return `ExchangeCallResult<T>`. For multi-exchange code use `client.ExchangeApi.SharedClient` and call `.Discover()` before routing optional shared features.
 
