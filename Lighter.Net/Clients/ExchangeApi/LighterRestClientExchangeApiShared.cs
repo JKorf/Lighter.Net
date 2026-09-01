@@ -295,7 +295,9 @@ namespace Lighter.Net.Clients.ExchangeApi
             };
 
             var compareName = s.Symbol.StartsWith("1000") ? "k" + s.Symbol.Substring(4) : s.Symbol;
-            var tokenInfo = tokens.SingleOrDefault(x => x.Symbol == compareName);
+            var tokenInfo = tokens.SingleOrDefault(x => x.Symbol == compareName
+                && ((x.MarketType == MarketType.Spot && s.MarketType == SymbolType.Spot) 
+                || (x.MarketType == MarketType.Perps && s.MarketType == SymbolType.Perp)));
             if (tokenInfo != null)
             {
                 if (tokenInfo.AssetType == AssetType.Crypto)
