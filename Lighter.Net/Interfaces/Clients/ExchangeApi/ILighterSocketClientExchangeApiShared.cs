@@ -27,20 +27,20 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
     /// exchange client libraries.
     /// </summary>
     public interface ILighterSocketClientExchangeSharedApi :
-        ISubscribeAllTickersOperation,
-        ISubscribeTickerOperation,
-        ISubscribeTradesOperation,
-        ISubscribeBookTickerOperation,
-        ISubscribeKlinesOperation,
-        ISubscribeBalancesOperation,
-        ISubscribeSpotOrdersOperation,
-        ISubscribeFuturesOrdersOperation,
-        ISubscribeUserTradesOperation,
-        ISubscribePositionsOperation,
-        IPlaceSpotOrderOperation,
-        ICancelSpotOrderOperation,
-        IPlaceFuturesOrderOperation,
-        ICancelFuturesOrderOperation
+        ISubscribeAllTickersSocket,
+        ISubscribeTickerSocket,
+        ISubscribeTradesSocket,
+        ISubscribeBookTickerSocket,
+        ISubscribeKlinesSocket,
+        ISubscribeBalancesSocket,
+        ISubscribeSpotOrdersSocket,
+        ISubscribeFuturesOrdersSocket,
+        ISubscribeUserTradesSocket,
+        ISubscribePositionsSocket,
+        IPlaceSpotOrderSocket,
+        ICancelSpotOrderSocket,
+        IPlaceFuturesOrderSocket,
+        ICancelFuturesOrderSocket
     {
     }
 }
