@@ -1,4 +1,4 @@
-﻿using CryptoExchange.Net.Converters.SystemTextJson;
+using CryptoExchange.Net.Converters.SystemTextJson;
 using CryptoExchange.Net.Objects;
 using Lighter.Net.Enums;
 using Lighter.Net.Interfaces.Clients.ExchangeApi;
