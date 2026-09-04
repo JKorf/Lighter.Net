@@ -16,7 +16,6 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Deposit client
 
         GetDepositAddressesOptions IDepositRestClient.GetDepositAddressesOptions { get; }
             = new GetDepositAddressesOptions(_exchangeName, true)
@@ -28,6 +27,10 @@ namespace Lighter.Net.Clients.ExchangeApi
             return Task.FromResult(HttpResult.Fail<SharedDepositAddress[]>(_exchangeName, new InvalidOperationError("GetDepositAddresses is not support on " + _exchangeName)));
         }
 
+        #region Get Deposit History
+
+        async Task<ICallResult<SharedDeposit[]>> IGetDepositHistory.GetDepositHistoryAsync(GetDepositsRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => await GetDepositHistoryAsync(request, pageRequest, ct).ConfigureAwait(false);
 
         Task<HttpResult<SharedDeposit[]>> IDepositRestClient.GetDepositsAsync(GetDepositsRequest request, PageRequest? pageRequest, CancellationToken ct)
             => GetDepositHistoryAsync(request, pageRequest, ct);
@@ -81,6 +84,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                     }).ToArray(), nextPageRequest);
         }
 
+        #endregion
+
         private SharedTransferStatus ParseTransferStatus(DepositStatus status)
         {
             if (status == DepositStatus.Completed)
@@ -93,6 +98,5 @@ namespace Lighter.Net.Clients.ExchangeApi
             return SharedTransferStatus.Unknown;
         }
 
-        #endregion
     }
 }

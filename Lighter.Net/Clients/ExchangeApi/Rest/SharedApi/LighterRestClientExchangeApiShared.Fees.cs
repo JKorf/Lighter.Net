@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Fee Client
+        #region Get Fees
+
+        async Task<ICallResult<SharedFee>> IGetFees.GetFeesAsync(GetFeeRequest request, CancellationToken ct)
+            => await GetFeesAsync(request, ct).ConfigureAwait(false);
+
         public GetFeeOptions GetFeeOptions { get; } = new GetFeeOptions(_exchangeName, true);
 
         public async Task<HttpResult<SharedFee>> GetFeesAsync(GetFeeRequest request, CancellationToken ct)
@@ -34,6 +38,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result, new SharedFee(result.Data.CurrentMakerFeeTick * 100, result.Data.CurrentTakerFeeTick * 100));
 
         }
+
         #endregion
     }
 }

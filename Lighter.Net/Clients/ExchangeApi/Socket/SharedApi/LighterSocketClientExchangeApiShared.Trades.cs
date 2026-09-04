@@ -16,7 +16,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterSocketClientExchangeSharedApi
     {
-        #region Trade client
+
+        #region Subscribe Trades
 
         public SubscribeTradeOptions SubscribeTradeOptions { get; }
             = new SubscribeTradeOptions(_exchangeName, false);
@@ -48,5 +49,6 @@ namespace Lighter.Net.Clients.ExchangeApi
         }
 
         #endregion
+
     }
 }

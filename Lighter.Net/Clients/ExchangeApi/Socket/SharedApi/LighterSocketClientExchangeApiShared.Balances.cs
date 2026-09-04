@@ -16,7 +16,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterSocketClientExchangeSharedApi
     {
-        #region Balance client
+        #region Subscribe Balances
+
         public SubscribeBalanceOptions SubscribeBalanceOptions { get; }
             = new SubscribeBalanceOptions(_exchangeName, true);
         public async Task<WebSocketResult<UpdateSubscription>> SubscribeToBalanceUpdatesAsync(SubscribeBalancesRequest request, Action<DataEvent<SharedBalance[]>> handler, CancellationToken ct)
@@ -58,5 +59,6 @@ namespace Lighter.Net.Clients.ExchangeApi
         }
 
         #endregion
+
     }
 }

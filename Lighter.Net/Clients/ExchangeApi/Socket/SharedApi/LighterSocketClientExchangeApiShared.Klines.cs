@@ -16,7 +16,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterSocketClientExchangeSharedApi
     {
-        #region Kline client
+        #region Subscribe Klines
+
         public SubscribeKlineOptions SubscribeKlineOptions { get; } = new SubscribeKlineOptions(_exchangeName, false);
         public async Task<WebSocketResult<UpdateSubscription>> SubscribeToKlineUpdatesAsync(SubscribeKlineRequest request, Action<DataEvent<SharedKline>> handler, CancellationToken ct)
         {
@@ -44,6 +45,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return result;
         }
+
         #endregion
     }
 }

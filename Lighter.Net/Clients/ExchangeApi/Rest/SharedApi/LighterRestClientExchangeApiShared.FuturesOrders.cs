@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Futures Order Client
+
+        #region Place Futures Order
+
+        async Task<ICallResult<SharedId>> IPlaceFuturesOrder.PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
+            => await PlaceFuturesOrderAsync(request, ct).ConfigureAwait(false);
 
         public SharedFeeDeductionType FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
         public SharedFeeAssetType FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
@@ -66,6 +70,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
         private decimal GetSlippagePrice(PlaceFuturesOrderRequest request)
         {
             // Calculate 5% max slippage
@@ -74,6 +80,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return request.Price!.Value * 0.95m;
         }
+
+        #region Get Futures Order
+
+        async Task<ICallResult<SharedFuturesOrder>> IGetFuturesOrder.GetFuturesOrderAsync(GetOrderRequest request, CancellationToken ct)
+            => await GetFuturesOrderAsync(request, ct).ConfigureAwait(false);
 
         public GetFuturesOrderOptions GetFuturesOrderOptions { get; } = new GetFuturesOrderOptions(_exchangeName, true);
         public async Task<HttpResult<SharedFuturesOrder>> GetFuturesOrderAsync(GetOrderRequest request, CancellationToken ct)
@@ -124,6 +135,13 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
+        #region Get Open Futures Orders
+
+        async Task<ICallResult<SharedFuturesOrder[]>> IGetOpenFuturesOrders.GetOpenFuturesOrdersAsync(GetOpenOrdersRequest request, CancellationToken ct)
+            => await GetOpenFuturesOrdersAsync(request, ct).ConfigureAwait(false);
+
         public GetOpenFuturesOrdersOptions GetOpenFuturesOrdersOptions { get; } = new GetOpenFuturesOrdersOptions(_exchangeName, true);
         public async Task<HttpResult<SharedFuturesOrder[]>> GetOpenFuturesOrdersAsync(GetOpenOrdersRequest request, CancellationToken ct)
         {
@@ -158,6 +176,13 @@ namespace Lighter.Net.Clients.ExchangeApi
             }).ToArray());
 
         }
+
+        #endregion
+
+        #region Get Closed Futures Orders
+
+        async Task<ICallResult<SharedFuturesOrder[]>> IGetClosedFuturesOrders.GetClosedFuturesOrdersAsync(GetClosedOrdersRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => await GetClosedFuturesOrdersAsync(request, pageRequest, ct).ConfigureAwait(false);
 
         public GetFuturesClosedOrdersOptions GetClosedFuturesOrdersOptions { get; } = new GetFuturesClosedOrdersOptions(_exchangeName, true, true, true, 100);
         public async Task<HttpResult<SharedFuturesOrder[]>> GetClosedFuturesOrdersAsync(GetClosedOrdersRequest request, PageRequest? pageRequest, CancellationToken ct)
@@ -214,6 +239,13 @@ namespace Lighter.Net.Clients.ExchangeApi
                     }).ToArray(), nextPageRequest);
         }
 
+        #endregion
+
+        #region Get Futures Order Trades
+
+        async Task<ICallResult<SharedUserTrade[]>> IGetFuturesOrderTrades.GetFuturesOrderTradesAsync(GetOrderTradesRequest request, CancellationToken ct)
+            => await GetFuturesOrderTradesAsync(request, ct).ConfigureAwait(false);
+
         public GetFuturesOrderTradesOptions GetFuturesOrderTradesOptions { get; } = new GetFuturesOrderTradesOptions(_exchangeName, true);
         public async Task<HttpResult<SharedUserTrade[]>> GetFuturesOrderTradesAsync(GetOrderTradesRequest request, CancellationToken ct)
         {
@@ -244,6 +276,13 @@ namespace Lighter.Net.Clients.ExchangeApi
             }).ToArray());
 
         }
+
+        #endregion
+
+        #region Get Futures User Trade History
+
+        async Task<ICallResult<SharedUserTrade[]>> IGetFuturesUserTradeHistory.GetFuturesUserTradeHistoryAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => await GetFuturesUserTradeHistoryAsync(request, pageRequest, ct).ConfigureAwait(false);
 
         Task<HttpResult<SharedUserTrade[]>> IFuturesOrderRestClient.GetFuturesUserTradesAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
             => GetFuturesUserTradeHistoryAsync(request, pageRequest, ct);
@@ -301,6 +340,13 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
+        #region Cancel Futures Order
+
+        async Task<ICallResult<SharedId>> ICancelFuturesOrder.CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
+            => await CancelFuturesOrderAsync(request, ct).ConfigureAwait(false);
+
         public CancelFuturesOrderOptions CancelFuturesOrderOptions { get; } = new CancelFuturesOrderOptions(_exchangeName, true);
         public async Task<HttpResult<SharedId>> CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
         {
@@ -318,6 +364,13 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(order, new SharedId(request.OrderId));
 
         }
+
+        #endregion
+
+        #region Get Positions
+
+        async Task<ICallResult<SharedPosition[]>> IGetPositions.GetPositionsAsync(GetPositionsRequest request, CancellationToken ct)
+            => await GetPositionsAsync(request, ct).ConfigureAwait(false);
 
         public GetPositionsOptions GetPositionsOptions { get; } = new GetPositionsOptions(_exchangeName, true);
         public async Task<HttpResult<SharedPosition[]>> GetPositionsAsync(GetPositionsRequest request, CancellationToken ct)
@@ -347,6 +400,13 @@ namespace Lighter.Net.Clients.ExchangeApi
                 }).ToArray());
 
         }
+
+        #endregion
+
+        #region Close Position
+
+        async Task<ICallResult<SharedId>> IClosePosition.ClosePositionAsync(ClosePositionRequest request, CancellationToken ct)
+            => await ClosePositionAsync(request, ct).ConfigureAwait(false);
 
         public ClosePositionOptions ClosePositionOptions { get; } = new ClosePositionOptions(_exchangeName, true)
         {
@@ -386,6 +446,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
         private decimal GetSlippagePrice(SharedPositionSide side, decimal price)
         {
             // Calculate 5% max slippage
@@ -394,9 +456,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return price * 0.95m;
         }
-        #endregion
 
-        #region Futures Client Id Order Client
+        #region Get Futures Order By Client Order Id
+
+        async Task<ICallResult<SharedFuturesOrder>> IGetFuturesOrderByClientOrderId.GetFuturesOrderByClientOrderIdAsync(GetOrderRequest request, CancellationToken ct)
+            => await GetFuturesOrderByClientOrderIdAsync(request, ct).ConfigureAwait(false);
 
         public GetFuturesOrderByClientOrderIdOptions GetFuturesOrderByClientOrderIdOptions { get; } = new GetFuturesOrderByClientOrderIdOptions(_exchangeName, true);
         public async Task<HttpResult<SharedFuturesOrder>> GetFuturesOrderByClientOrderIdAsync(GetOrderRequest request, CancellationToken ct)
@@ -447,6 +511,13 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
+        #region Cancel Futures Order By Client Order Id
+
+        async Task<ICallResult<SharedId>> ICancelFuturesOrderByClientOrderId.CancelFuturesOrderByClientOrderIdAsync(CancelOrderRequest request, CancellationToken ct)
+            => await CancelFuturesOrderByClientOrderIdAsync(request, ct).ConfigureAwait(false);
+
         public CancelFuturesOrderByClientOrderIdOptions CancelFuturesOrderByClientOrderIdOptions { get; } = new CancelFuturesOrderByClientOrderIdOptions(_exchangeName, true);
         public async Task<HttpResult<SharedId>> CancelFuturesOrderByClientOrderIdAsync(CancelOrderRequest request, CancellationToken ct)
         {
@@ -464,6 +535,7 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(order, new SharedId(request.OrderId));
 
         }
+
         #endregion
     }
 }

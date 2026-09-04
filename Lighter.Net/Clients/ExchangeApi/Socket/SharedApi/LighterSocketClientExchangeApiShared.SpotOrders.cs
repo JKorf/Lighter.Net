@@ -16,7 +16,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterSocketClientExchangeSharedApi
     {
-        #region Spot Order client
+
+        #region Subscribe Spot Orders
 
         async Task<WebSocketResult<UpdateSubscription>> ISpotOrderSocketClient.SubscribeToSpotOrderUpdatesAsync(SubscribeSpotOrderRequest request, Action<DataEvent<SharedSpotOrder[]>> handler, CancellationToken ct)
             => await SubscribeToSpotOrderUpdatesAsync(request, x => handler(x.ToType<SharedSpotOrder[]>(x.Data)), ct).ConfigureAwait(false);
@@ -61,6 +62,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return result;
         }
+
+        #endregion
 
         private SharedOrderType ParseOrderType(OrderType type)
         {
@@ -110,10 +113,13 @@ namespace Lighter.Net.Clients.ExchangeApi
             return SharedOrderStatus.Unknown;
         }
 
+        #region Place Spot Order
 
-        #endregion
+        async Task<ICallResult<SharedId>> IPlaceSpotOrder.PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
+            => await PlaceSpotOrderAsync(request, ct).ConfigureAwait(false);
 
-        #region Spot Order Client
+        PlaceSpotOrderOptions IPlaceSpotOrder.PlaceSpotOrderOptions
+            => PlaceSpotOrderOptions;
 
         public SharedFeeDeductionType SpotFeeDeductionType => SharedFeeDeductionType.DeductFromOutput;
         public SharedFeeAssetType SpotFeeAssetType => SharedFeeAssetType.OutputAsset;
@@ -170,6 +176,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
         private Enums.TimeInForce GetTimeInForce(SharedTimeInForce? tif, SharedOrderType type)
         {
             if (tif == SharedTimeInForce.ImmediateOrCancel) return TimeInForce.ImmediateOrCancel;
@@ -188,6 +196,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return request.Price!.Value * 0.95m;
         }
+        #region Cancel Spot Order
+
+        async Task<ICallResult<SharedId>> ICancelSpotOrder.CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
+            => await CancelSpotOrderAsync(request, ct).ConfigureAwait(false);
+
+        CancelSpotOrderOptions ICancelSpotOrder.CancelSpotOrderOptions
+            => CancelSpotOrderOptions;
+
         public CancelSpotOrderSocketOptions CancelSpotOrderOptions { get; }
             = new CancelSpotOrderSocketOptions(_exchangeName, true);
         public async Task<QueryResult<SharedId>> CancelSpotOrderAsync(CancelOrderRequest request, CancellationToken ct)
@@ -205,6 +221,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return QueryResult.Ok(order, new SharedId(request.OrderId));
         }
+
         #endregion
     }
 }

@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Open Interest client
+
+        #region Get Open Interest
+
+        async Task<ICallResult<SharedOpenInterest>> IGetOpenInterest.GetOpenInterestAsync(GetOpenInterestRequest request, CancellationToken ct)
+            => await GetOpenInterestAsync(request, ct).ConfigureAwait(false);
 
         public GetOpenInterestOptions GetOpenInterestOptions { get; } = new GetOpenInterestOptions(_exchangeName, false);
         public async Task<HttpResult<SharedOpenInterest>> GetOpenInterestAsync(GetOpenInterestRequest request, CancellationToken ct)
@@ -37,5 +41,6 @@ namespace Lighter.Net.Clients.ExchangeApi
         }
 
         #endregion
+
     }
 }

@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Withdrawal client
+
+        #region Get Withdrawal History
+
+        async Task<ICallResult<SharedWithdrawal[]>> IGetWithdrawalHistory.GetWithdrawalHistoryAsync(GetWithdrawalsRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => await GetWithdrawalHistoryAsync(request, pageRequest, ct).ConfigureAwait(false);
 
         Task<HttpResult<SharedWithdrawal[]>> IWithdrawalRestClient.GetWithdrawalsAsync(GetWithdrawalsRequest request, PageRequest? pageRequest, CancellationToken ct)
             => GetWithdrawalHistoryAsync(request, pageRequest, ct);
@@ -68,6 +72,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 .ToArray(), nextPageRequest);
         }
 
+        #endregion
+
         private SharedTransferStatus ParseTransferStatus(WithdrawalStatus status)
         {
             if (status == WithdrawalStatus.Completed)
@@ -79,6 +85,5 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return SharedTransferStatus.Unknown;
         }
-        #endregion
     }
 }

@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Funding Rate client
+        #region Get Funding Rate History
+
+        async Task<ICallResult<SharedFundingRate[]>> IGetFundingRateHistory.GetFundingRateHistoryAsync(GetFundingRateHistoryRequest request, PageRequest? pageRequest, CancellationToken ct)
+            => await GetFundingRateHistoryAsync(request, pageRequest, ct).ConfigureAwait(false);
+
         public GetFundingRateHistoryOptions GetFundingRateHistoryOptions { get; } = 
             new GetFundingRateHistoryOptions(_exchangeName, false, true, true, 100, false)
             {
@@ -60,6 +64,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                         new SharedFundingRate(x.Rate, x.Timestamp))
                     .ToArray(), nextPageRequest);
         }
+
         #endregion
     }
 }

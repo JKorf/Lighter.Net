@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Balance Client
+        #region Get Balances
+
+        async Task<ICallResult<SharedBalance[]>> IGetBalances.GetBalancesAsync(GetBalancesRequest request, CancellationToken ct)
+            => await GetBalancesAsync(request, ct).ConfigureAwait(false);
+
         public GetBalancesOptions GetBalancesOptions { get; } = new GetBalancesOptions(_exchangeName, AccountTypeFilter.Futures, AccountTypeFilter.Spot);
 
         public async Task<HttpResult<SharedBalance[]>> GetBalancesAsync(GetBalancesRequest request, CancellationToken ct)
@@ -42,5 +46,6 @@ namespace Lighter.Net.Clients.ExchangeApi
         }
 
         #endregion
+
     }
 }

@@ -16,7 +16,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterSocketClientExchangeSharedApi
     {
-        #region Futures Order client
+
+        #region Subscribe Futures Orders
 
         async Task<WebSocketResult<UpdateSubscription>> IFuturesOrderSocketClient.SubscribeToFuturesOrderUpdatesAsync(SubscribeFuturesOrderRequest request, Action<DataEvent<SharedFuturesOrder[]>> handler, CancellationToken ct)
             => await SubscribeToFuturesOrderUpdatesAsync(request, x => handler(x.ToType<SharedFuturesOrder[]>(x.Data)), ct).ConfigureAwait(false);
@@ -62,9 +63,16 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return result;
         }
+
         #endregion
 
-        #region Futures Order Client
+        #region Place Futures Order
+
+        async Task<ICallResult<SharedId>> IPlaceFuturesOrder.PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
+            => await PlaceFuturesOrderAsync(request, ct).ConfigureAwait(false);
+
+        PlaceFuturesOrderOptions IPlaceFuturesOrder.PlaceFuturesOrderOptions
+            => PlaceFuturesOrderOptions;
 
         public SharedFeeDeductionType FuturesFeeDeductionType => SharedFeeDeductionType.AddToCost;
         public SharedFeeAssetType FuturesFeeAssetType => SharedFeeAssetType.QuoteAsset;
@@ -114,6 +122,8 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
         private decimal GetSlippagePrice(PlaceFuturesOrderRequest request)
         {
             // Calculate 5% max slippage
@@ -122,6 +132,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return request.Price!.Value * 0.95m;
         }
+
+        #region Cancel Futures Order
+
+        async Task<ICallResult<SharedId>> ICancelFuturesOrder.CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
+            => await CancelFuturesOrderAsync(request, ct).ConfigureAwait(false);
+
+        CancelFuturesOrderOptions ICancelFuturesOrder.CancelFuturesOrderOptions
+            => CancelFuturesOrderOptions;
 
         public CancelFuturesOrderSocketOptions CancelFuturesOrderOptions { get; } = new CancelFuturesOrderSocketOptions(_exchangeName, true);
         public async Task<QueryResult<SharedId>> CancelFuturesOrderAsync(CancelOrderRequest request, CancellationToken ct)
@@ -142,5 +160,6 @@ namespace Lighter.Net.Clients.ExchangeApi
         }
 
         #endregion
+
     }
 }

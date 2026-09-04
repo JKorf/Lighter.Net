@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Order Book client
+        #region Get Order Book
+
+        async Task<ICallResult<SharedOrderBook>> IGetOrderBook.GetOrderBookAsync(GetOrderBookRequest request, CancellationToken ct)
+            => await GetOrderBookAsync(request, ct).ConfigureAwait(false);
+
         public GetOrderBookOptions GetOrderBookOptions { get; } = new GetOrderBookOptions(_exchangeName, 1, 250, false)
         {
             RequestNotes = "When specifying the limit parameter less entries might be returned as individual orders are combined into aggregated levels client side"
@@ -47,11 +51,12 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         }
 
+        #endregion
+
         class CombinedEntry : ISymbolOrderBookEntry
         {
             public decimal Quantity { get; set; }
             public decimal Price { get; set; }
         }
-        #endregion
     }
 }

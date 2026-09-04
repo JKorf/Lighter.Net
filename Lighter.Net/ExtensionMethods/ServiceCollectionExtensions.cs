@@ -108,6 +108,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<ILighterOrderBookFactory, LighterOrderBookFactory>();
             services.AddTransient<ITrackerFactory, LighterTrackerFactory>();
             services.AddTransient<ILighterTrackerFactory, LighterTrackerFactory>();
+            services.AddTransient<ILighterSharedApiClient, LighterSharedApiClient>();
             services.AddSingleton<ILighterUserClientProvider, LighterUserClientProvider>(x =>
                 new LighterUserClientProvider(
                     x.GetRequiredService<IHttpClientFactory>().CreateClient(typeof(ILighterRestClient).Name),
@@ -117,6 +118,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.RegisterSharedRestInterfaces(x => x.GetRequiredService<ILighterRestClient>().ExchangeApi.SharedClient);
             services.RegisterSharedSocketInterfaces(x => x.GetRequiredService<ILighterSocketClient>().ExchangeApi.SharedClient);
+
+            services.RegisterSharedApi(x => x.GetRequiredService<ILighterRestClient>().ExchangeApi.SharedApi);
+            services.RegisterSharedApi(x => x.GetRequiredService<ILighterSocketClient>().ExchangeApi.SharedApi);
 
             return services;
         }

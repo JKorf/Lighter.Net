@@ -16,7 +16,11 @@ namespace Lighter.Net.Clients.ExchangeApi
 {
     internal partial class LighterRestClientExchangeSharedApi
     {
-        #region Futures Symbol client
+
+        #region Get Futures Symbols
+
+        async Task<ICallResult<SharedFuturesSymbol[]>> IGetFuturesSymbols.GetFuturesSymbolsAsync(GetSymbolsRequest request, CancellationToken ct)
+            => await GetFuturesSymbolsAsync(request, ct).ConfigureAwait(false);
 
         public SharedSymbolCatalog? FuturesSymbolCatalog => ExchangeSymbolCache.GetSymbolCatalog(_exchangeName, _topicFuturesId, _api.EnvironmentName, null);
         public GetFuturesSymbolsOptions GetFuturesSymbolsOptions { get; } = new GetFuturesSymbolsOptions(_exchangeName, false);
@@ -48,6 +52,8 @@ namespace Lighter.Net.Clients.ExchangeApi
             ExchangeSymbolCache.UpdateSymbolInfo(_topicFuturesId, _api.EnvironmentName, null, symbolRegistrations);
             return HttpResult.Ok(resultSymbols, SharedUtils.ApplySymbolFilter(resultData, request));
         }
+
+        #endregion
 
         private SharedFuturesSymbol ParseFuturesSymbol(LighterSymbol s, LighterToken[] tokens)
         {
@@ -141,6 +147,5 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             return ExchangeCallResult<bool>.Ok(Exchange, ExchangeSymbolCache.SupportsSymbol(_topicFuturesId, _api.EnvironmentName, null, symbolName));
         }
-        #endregion
     }
 }

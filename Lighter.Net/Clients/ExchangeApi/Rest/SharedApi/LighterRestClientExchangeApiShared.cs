@@ -29,6 +29,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public LighterRestClientExchangeSharedApi(LighterRestClientExchangeApi api)
             : base(
+                  SharedTransport.Rest,
                   api.Exchange,
                   [TradingMode.Spot, TradingMode.PerpetualLinear],
                   () => api.Authenticated,
