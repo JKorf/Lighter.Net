@@ -36,10 +36,9 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public PlaceSpotOrderOptions PlaceSpotOrderOptions { get; } = new PlaceSpotOrderOptions(_exchangeName)
         {
-            RequiredRequestParameters = new List<ParameterDescription>
-            {
-                new ParameterDescription(nameof(PlaceSpotOrderRequest.Price), typeof(decimal), "Price for the order. For market orders this should be the current symbol price to calculate max slippage", 21.5m)
-            },
+            ParameterRuleOverwrites = [
+                RequestParameterRuleOverride<PlaceSpotOrderRequest>.Required(x => x.Price, "Limit price. For market orders the current price should be provided to calculate max slippage")
+            ],
         };
         public async Task<HttpResult<SharedId>> PlaceSpotOrderAsync(PlaceSpotOrderRequest request, CancellationToken ct)
         {

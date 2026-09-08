@@ -24,10 +24,9 @@ namespace Lighter.Net.Clients.ExchangeApi
         public GetFundingRateHistoryOptions GetFundingRateHistoryOptions { get; } = 
             new GetFundingRateHistoryOptions(_exchangeName, false, true, true, 100, false)
             {
-                OptionalExchangeParameters = new List<ParameterDescription>
-                {
-                    new ParameterDescription("Resolution", typeof(FundingResolution), "The resolution of the data, by default 1H", FundingResolution.OneDay)
-                }
+                ExchangeParameterRules = [
+                    ExchangeParameterRule.Optional("Resolution", "The resolution of the data, by default 1H", FundingResolution.OneDay)
+                ]
             };
 
         public async Task<HttpResult<SharedFundingRate[]>> GetFundingRateHistoryAsync(GetFundingRateHistoryRequest request, PageRequest? pageRequest, CancellationToken ct)
