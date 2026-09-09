@@ -36,7 +36,12 @@ namespace Lighter.Net.Clients.ExchangeApi
         public PlaceFuturesOrderOptions PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderOptions(_exchangeName, false)
         {
             ParameterRuleOverwrites = [
-                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.Required(x => x.Price, "Limit price. For market orders the current price should be provided to calculate max slippage")
+                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.Required(x => x.Price, "Limit price. For market orders the current price should be provided to calculate max slippage"),
+                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.TakeProfitPrice),
+                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.StopLossPrice),
+                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.Leverage),
+                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.PositionSide),
+                RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.MarginMode)
             ],
         };
         public async Task<HttpResult<SharedId>> PlaceFuturesOrderAsync(PlaceFuturesOrderRequest request, CancellationToken ct)
@@ -66,6 +71,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 price: request.OrderType == SharedOrderType.Market ? GetSlippagePrice(request) : request.Price!.Value,
                 timeInForce: GetTimeInForce(request.TimeInForce, request.OrderType),
                 clientOrderIndex: cid,
+                reduceOnly: request.ReduceOnly,
                 ct: ct).ConfigureAwait(false);
 
             if (!result.Success)
@@ -293,7 +299,13 @@ namespace Lighter.Net.Clients.ExchangeApi
             => GetFuturesUserTradeHistoryAsync(request, pageRequest, ct);
         GetFuturesUserTradeHistoryOptions IFuturesOrderRestClient.GetFuturesUserTradesOptions => GetFuturesUserTradeHistoryOptions;
 
-        public GetFuturesUserTradeHistoryOptions GetFuturesUserTradeHistoryOptions { get; } = new GetFuturesUserTradeHistoryOptions(_exchangeName, true, true, true, 100);
+        public GetFuturesUserTradeHistoryOptions GetFuturesUserTradeHistoryOptions { get; } = new GetFuturesUserTradeHistoryOptions(_exchangeName, true, true, false, 100)
+        {
+            ParameterRuleOverwrites = [
+                RequestParameterRuleOverride<GetUserTradesRequest>.NotSupported(x => x.StartTime),
+                RequestParameterRuleOverride<GetUserTradesRequest>.NotSupported(x => x.EndTime),
+                ]
+        };
         public async Task<HttpResult<SharedUserTrade[]>> GetFuturesUserTradeHistoryAsync(GetUserTradesRequest request, PageRequest? pageRequest, CancellationToken ct)
         {
             var validationError = GetFuturesUserTradeHistoryOptions.ValidateRequest(request, this);
