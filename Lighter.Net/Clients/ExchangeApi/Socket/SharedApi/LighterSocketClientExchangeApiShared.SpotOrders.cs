@@ -135,7 +135,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public PlaceSpotOrderSocketOptions PlaceSpotOrderOptions { get; } = new PlaceSpotOrderSocketOptions(_exchangeName)
         {
-            ParameterRuleOverwrites =
+            ParameterRuleOverrides =
             [
                 RequestParameterRuleOverride<PlaceSpotOrderRequest>.Required(x => x.Price, "Limit price. For market orders this should be the current symbol price to calculate max slippage")
             ],

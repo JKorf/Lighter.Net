@@ -38,7 +38,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public GetDepositHistoryOptions GetDepositHistoryOptions { get; } = new GetDepositHistoryOptions(_exchangeName, false, true, false, 100)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<GetDepositsRequest>.NotSupported(x => x.StartTime),
                 RequestParameterRuleOverride<GetDepositsRequest>.NotSupported(x => x.EndTime)
                 ]

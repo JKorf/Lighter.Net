@@ -35,7 +35,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public PlaceFuturesOrderOptions PlaceFuturesOrderOptions { get; } = new PlaceFuturesOrderOptions(_exchangeName, false)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<PlaceFuturesOrderRequest>.Required(x => x.Price, "Limit price. For market orders the current price should be provided to calculate max slippage"),
                 RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.TakeProfitPrice),
                 RequestParameterRuleOverride<PlaceFuturesOrderRequest>.NotSupported(x => x.StopLossPrice),
@@ -301,7 +301,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public GetFuturesUserTradeHistoryOptions GetFuturesUserTradeHistoryOptions { get; } = new GetFuturesUserTradeHistoryOptions(_exchangeName, true, true, false, 100)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<GetUserTradesRequest>.NotSupported(x => x.StartTime),
                 RequestParameterRuleOverride<GetUserTradesRequest>.NotSupported(x => x.EndTime),
                 ]
@@ -424,7 +424,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public ClosePositionOptions ClosePositionOptions { get; } = new ClosePositionOptions(_exchangeName, true)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<ClosePositionRequest>.Required(x => x.PositionSide),
                 RequestParameterRuleOverride<ClosePositionRequest>.Required(x => x.Quantity)
             ],

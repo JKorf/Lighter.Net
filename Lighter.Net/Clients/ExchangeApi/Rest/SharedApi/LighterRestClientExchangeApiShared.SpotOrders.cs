@@ -36,7 +36,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public PlaceSpotOrderOptions PlaceSpotOrderOptions { get; } = new PlaceSpotOrderOptions(_exchangeName)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<PlaceSpotOrderRequest>.Required(x => x.Price, "Limit price. For market orders the current price should be provided to calculate max slippage")
             ],
         };
@@ -191,7 +191,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public GetSpotClosedOrdersOptions GetClosedSpotOrdersOptions { get; } = new GetSpotClosedOrdersOptions(_exchangeName, false, true, false, 100)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<GetClosedOrdersRequest>.NotSupported(x => x.StartTime),
                 RequestParameterRuleOverride<GetClosedOrdersRequest>.NotSupported(x => x.EndTime)
                 ]
@@ -302,7 +302,7 @@ namespace Lighter.Net.Clients.ExchangeApi
 
         public GetSpotUserTradeHistoryOptions GetSpotUserTradeHistoryOptions { get; } = new GetSpotUserTradeHistoryOptions(_exchangeName, false, true, false, 100)
         {
-            ParameterRuleOverwrites = [
+            ParameterRuleOverrides = [
                 RequestParameterRuleOverride<GetUserTradesRequest>.NotSupported(x => x.StartTime),
                 RequestParameterRuleOverride<GetUserTradesRequest>.NotSupported(x => x.EndTime),
                 ]
