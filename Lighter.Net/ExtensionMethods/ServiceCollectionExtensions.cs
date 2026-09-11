@@ -54,9 +54,9 @@ namespace Microsoft.Extensions.DependencyInjection
             options.Socket.Environment = LighterEnvironment.GetEnvironmentByName(socketEnvName) ?? options.Socket.Environment!;
             options.Socket.ApiCredentials = options.Socket.ApiCredentials ?? options.ApiCredentials;
 
-
-            services.AddSingleton(x => Options.Options.Create(options.Rest));
-            services.AddSingleton(x => Options.Options.Create(options.Socket));
+            services.AddSingleton(Options.Options.Create(options.Rest));
+            services.AddSingleton(Options.Options.Create(options.Socket));
+            services.AddSingleton(Options.Options.Create(options));
 
             return AddLighterCore(services, options.SocketClientLifeTime);
         }
@@ -84,8 +84,9 @@ namespace Microsoft.Extensions.DependencyInjection
             options.Socket.Environment = options.Socket.Environment ?? options.Environment ?? LighterEnvironment.Live;
             options.Socket.ApiCredentials = options.Socket.ApiCredentials ?? options.ApiCredentials;
 
-            services.AddSingleton(x => Options.Options.Create(options.Rest));
-            services.AddSingleton(x => Options.Options.Create(options.Socket));
+            services.AddSingleton(Options.Options.Create(options.Rest));
+            services.AddSingleton(Options.Options.Create(options.Socket));
+            services.AddSingleton(Options.Options.Create(options));
 
             return AddLighterCore(services, options.SocketClientLifeTime);
         }
@@ -108,7 +109,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<ILighterOrderBookFactory, LighterOrderBookFactory>();
             services.AddTransient<ITrackerFactory, LighterTrackerFactory>();
             services.AddTransient<ILighterTrackerFactory, LighterTrackerFactory>();
-            services.AddTransient<ILighterSharedApiClient, LighterSharedApiClient>();
             services.AddSingleton<ILighterUserClientProvider, LighterUserClientProvider>(x =>
                 new LighterUserClientProvider(
                     x.GetRequiredService<IHttpClientFactory>().CreateClient(typeof(ILighterRestClient).Name),
@@ -116,8 +116,12 @@ namespace Microsoft.Extensions.DependencyInjection
                     x.GetRequiredService<IOptions<LighterRestOptions>>(),
                     x.GetRequiredService<IOptions<LighterSocketOptions>>()));
 
+            services.AddTransient<ILighterSharedApiClient, LighterSharedApiClient>();
+
             services.RegisterSharedRestInterfaces(x => x.GetRequiredService<ILighterRestClient>().ExchangeApi.SharedClient);
             services.RegisterSharedSocketInterfaces(x => x.GetRequiredService<ILighterSocketClient>().ExchangeApi.SharedClient);
+
+            services.RegisterSharedApiClientCapabilities<ILighterSharedApiClient>();
 
             services.RegisterSharedApi(x => x.GetRequiredService<ILighterRestClient>().ExchangeApi.SharedApi);
             services.RegisterSharedApi(x => x.GetRequiredService<ILighterSocketClient>().ExchangeApi.SharedApi);
