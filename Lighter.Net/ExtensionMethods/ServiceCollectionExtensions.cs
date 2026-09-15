@@ -1,17 +1,18 @@
 using CryptoExchange.Net;
 using CryptoExchange.Net.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
-using System.Net.Http;
-using System.Threading;
+using CryptoExchange.Net.SharedApis;
 using Lighter.Net;
 using Lighter.Net.Clients;
 using Lighter.Net.Interfaces;
 using Lighter.Net.Interfaces.Clients;
 using Lighter.Net.Objects.Options;
 using Lighter.Net.SymbolOrderBooks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
+using System.Net.Http;
+using System.Threading;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -116,16 +117,15 @@ namespace Microsoft.Extensions.DependencyInjection
                     x.GetRequiredService<IOptions<LighterRestOptions>>(),
                     x.GetRequiredService<IOptions<LighterSocketOptions>>()));
 
-            services.AddTransient<ILighterSharedApiClient, LighterSharedApiClient>();
-
             services.RegisterSharedRestInterfaces(x => x.GetRequiredService<ILighterRestClient>().ExchangeApi.SharedClient);
             services.RegisterSharedSocketInterfaces(x => x.GetRequiredService<ILighterSocketClient>().ExchangeApi.SharedClient);
 
-            services.RegisterSharedApiClientCapabilities<ILighterSharedApiClient>();
-
-            services.RegisterSharedApi(x => x.GetRequiredService<ILighterRestClient>().ExchangeApi.SharedApi);
-            services.RegisterSharedApi(x => x.GetRequiredService<ILighterSocketClient>().ExchangeApi.SharedApi);
-
+            services.RegisterSharedApiClient<
+                ILighterSharedApiClient,
+                LighterSharedApiClient>(sharedApis => sharedApis
+                    .Add(client => client.Rest)
+                    .Add(client => client.Socket)
+                    );
             return services;
         }
     }
