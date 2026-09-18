@@ -30,7 +30,7 @@ namespace Lighter.Net.Clients.ExchangeApi
         public LighterSocketClientExchangeSharedApi(LighterSocketClientExchangeApi api)
             : base(
                   SharedTransport.Socket,
-                  api.Exchange,
+                  api,
                   [TradingMode.Spot, TradingMode.PerpetualLinear],
                   () => api.Authenticated,
                   api.FormatSymbol)
