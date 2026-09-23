@@ -24,11 +24,11 @@ Lighter.Net uses a single `ExchangeApi` branch:
 - `restClient.ExchangeApi.ExchangeData`
 - `restClient.ExchangeApi.Account`
 - `restClient.ExchangeApi.Trading`
-- `restClient.ExchangeApi.SharedClient`
+- `restClient.ExchangeApi.SharedApi`
 - `socketClient.ExchangeApi.ExchangeData`
 - `socketClient.ExchangeApi.Account`
 - `socketClient.ExchangeApi.Trading`
-- `socketClient.ExchangeApi.SharedClient`
+- `socketClient.ExchangeApi.SharedApi`
 
 Do not generate `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi` for Lighter.Net.
 
@@ -87,15 +87,15 @@ For multi-exchange code, use `CryptoExchange.Net.SharedApis`:
 ```csharp
 using CryptoExchange.Net.SharedApis;
 
-var shared = new LighterRestClient().ExchangeApi.SharedClient;
-var capabilities = shared.Discover();
-var ticker = await shared.GetSpotTickerAsync(
+var shared = new LighterRestClient().ExchangeApi.SharedApi;
+// Use the exchange-level `ILighterSharedApiClient` aggregate's `GetCapability(...)` or `GetCapabilities(...)` methods for runtime capability lookup; use an API surface's `.SharedApi` property when the transport and API are known.
+var ticker = await shared.GetTickerAsync(
     new GetTickerRequest(new SharedSymbol(TradingMode.Spot, "ETH", "USDC")));
 ```
 
-Use `ExchangeData.GetTokensAsync()` for native token metadata. Shared `ISpotSymbolRestClient` and `IFuturesSymbolRestClient` discovery supports request filters and cached catalogs, and returns display names plus crypto/fiat/equity/commodity asset classifications.
+Use `ExchangeData.GetTokensAsync()` for native token metadata. Shared `IGetSpotSymbolsRest` and `IGetFuturesSymbolsRest` discovery supports request filters and cached catalogs, and returns display names plus crypto/fiat/equity/commodity asset classifications.
 
-Shared sockets implement `ISpotOrderManagementSocketClient` and `IFuturesOrderManagementSocketClient` for spot/futures placement and cancellation. Successful shared place-order calls and REST `ClosePositionAsync` return `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates. For shared market orders, `Price` supplies the reference for the 5% slippage bound.
+Shared sockets implement `IPlaceSpotOrderSocket` and `ICancelSpotOrderSocket` and `IPlaceFuturesOrderSocket` and `ICancelFuturesOrderSocket` for spot/futures placement and cancellation. Successful shared place-order calls and REST `ClosePositionAsync` return `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates. For shared market orders, `Price` supplies the reference for the 5% slippage bound.
 
 ## Dependency injection
 

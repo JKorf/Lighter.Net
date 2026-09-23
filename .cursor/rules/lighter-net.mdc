@@ -40,11 +40,11 @@ var price = ticker.Data.SpotSymbols[0].LastPrice;
 - `restClient.ExchangeApi.ExchangeData`
 - `restClient.ExchangeApi.Account`
 - `restClient.ExchangeApi.Trading`
-- `restClient.ExchangeApi.SharedClient`
+- `restClient.ExchangeApi.SharedApi`
 - `socketClient.ExchangeApi.ExchangeData`
 - `socketClient.ExchangeApi.Account`
 - `socketClient.ExchangeApi.Trading`
-- `socketClient.ExchangeApi.SharedClient`
+- `socketClient.ExchangeApi.SharedApi`
 
 There is no `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi` branch in Lighter.Net.
 
@@ -86,14 +86,14 @@ For exchange-agnostic code, use `CryptoExchange.Net.SharedApis`:
 ```csharp
 using CryptoExchange.Net.SharedApis;
 
-var shared = new LighterRestClient().ExchangeApi.SharedClient;
-var ticker = await shared.GetSpotTickerAsync(
+var shared = new LighterRestClient().ExchangeApi.SharedApi;
+var ticker = await shared.GetTickerAsync(
     new GetTickerRequest(new SharedSymbol(TradingMode.Spot, "ETH", "USDC")));
 ```
 
 Use `ExchangeData.GetTokensAsync()` for native token metadata. Shared spot/futures symbol discovery supports filters and cached catalogs, and returns display names plus crypto/fiat/equity/commodity asset classifications.
 
-Shared sockets implement `ISpotOrderManagementSocketClient` and `IFuturesOrderManagementSocketClient` for spot/futures placement and cancellation. Successful shared place-order calls and REST `ClosePositionAsync` return `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates. Shared market-order `Price` is the reference for the 5% slippage bound.
+Shared sockets implement `IPlaceSpotOrderSocket` and `ICancelSpotOrderSocket` and `IPlaceFuturesOrderSocket` and `ICancelFuturesOrderSocket` for spot/futures placement and cancellation. Successful shared place-order calls and REST `ClosePositionAsync` return `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates. Shared market-order `Price` is the reference for the 5% slippage bound.
 
 ## Hard rules
 
@@ -105,7 +105,7 @@ Shared sockets implement `ISpotOrderManagementSocketClient` and `IFuturesOrderMa
 - Never use Binance-style `SpotApi` or `FuturesApi`; use `ExchangeApi`.
 - Never use generic `ApiCredentials`; use `LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), accountIndex, apiKeyIndex, "API_SECRET")`.
 - Always store WebSocket subscriptions and unsubscribe on shutdown.
-- Always use `client.ExchangeApi.SharedClient` for cross-exchange code.
+- Always use `client.ExchangeApi.SharedApi` for cross-exchange code.
 - Set `IntegratorFeePercentage = 0` or `null` only when the user wants to disable the optional integrator fee.
 
 ## Reference

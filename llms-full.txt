@@ -37,7 +37,7 @@ Primary documentation:
 - Do not invent endpoint names. If unsure, inspect `Lighter.Net/Interfaces/Clients/**`.
 - Do not use Binance-style API branches. Lighter.Net has `ExchangeApi`, not `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi`.
 - Do not manually set nonces unless the user explicitly asks. Transaction methods can auto-populate nonce values from credentials.
-- For multi-exchange code, use `CryptoExchange.Net.SharedApis` interfaces from `client.ExchangeApi.SharedClient` and call `.Discover()` before routing optional shared features.
+- Use the exchange-level `ILighterSharedApiClient` aggregate's `GetCapability(...)` or `GetCapabilities(...)` methods for runtime capability lookup; use an API surface's `.SharedApi` property when the transport and API are known.
 - If the user asks about the optional integrator fee, explain that it can be disabled by setting `IntegratorFeePercentage` to `0` or `null` in client options.
 
 ## Installation
@@ -225,7 +225,7 @@ LighterRestClient
     .ExchangeData
     .Account
     .Trading
-    .SharedClient
+    .SharedApi
 ```
 
 WebSocket:
@@ -236,7 +236,7 @@ LighterSocketClient
     .ExchangeData
     .Account
     .Trading
-    .SharedClient
+    .SharedApi
 ```
 
 Important: Lighter.Net does not expose separate spot/futures client branches. Use spot-style symbols such as `ETH/USDC` for spot and perp-style symbols such as `ETH` for futures/perpetual markets on the same `ExchangeApi` branch.
@@ -455,17 +455,13 @@ using Lighter.Net.Clients;
 using CryptoExchange.Net.SharedApis;
 
 var restClient = new LighterRestClient();
-var shared = restClient.ExchangeApi.SharedClient;
+var shared = restClient.ExchangeApi.SharedApi;
 
-var sharedInfo = shared.Discover();
-var supportedFeatures = sharedInfo.Features
-    .Where(x => x.Supported)
-    .Select(x => x.EndpointName);
-Console.WriteLine($"{sharedInfo.Exchange} {sharedInfo.TypeName}: {string.Join(", ", supportedFeatures)}");
+// Use the exchange-level `ILighterSharedApiClient` aggregate's `GetCapability(...)` or `GetCapabilities(...)` methods for runtime capability lookup; use an API surface's `.SharedApi` property when the transport and API are known.
 
 var symbol = new SharedSymbol(TradingMode.Spot, "ETH", "USDC");
 
-var ticker = await shared.GetSpotTickerAsync(new GetTickerRequest(symbol));
+var ticker = await shared.GetTickerAsync(new GetTickerRequest(symbol));
 if (!ticker.Success)
 {
     Console.WriteLine(ticker.Error);
@@ -475,11 +471,11 @@ if (!ticker.Success)
 Console.WriteLine(ticker.Data.LastPrice);
 ```
 
-Lighter also implements the shared REST `IFundingRateRestClient`. Use `GetFundingRateHistoryAsync` with a futures/perpetual `SharedSymbol` when exchange-agnostic code needs historical funding rates.
+Lighter also implements the shared REST `IGetFundingRateHistoryRest`. Use `GetFundingRateHistoryAsync` with a futures/perpetual `SharedSymbol` when exchange-agnostic code needs historical funding rates.
 
-`ISpotSymbolRestClient` and `IFuturesSymbolRestClient` expose cached symbol catalogs and honor `GetSymbolsRequest` filters. Their returned symbols include display names and asset metadata. Spot assets are crypto (with stablecoin quote metadata); perpetual base assets are classified from `GetTokensAsync()` metadata as crypto, fiat, equity, commodity, or other TradFi.
+`IGetSpotSymbolsRest` and `IGetFuturesSymbolsRest` expose cached symbol catalogs and honor `GetSymbolsRequest` filters. Their returned symbols include display names and asset metadata. Spot assets are crypto (with stablecoin quote metadata); perpetual base assets are classified from `GetTokensAsync()` metadata as crypto, fiat, equity, commodity, or other TradFi.
 
-The shared socket client implements `ISpotOrderManagementSocketClient` and `IFuturesOrderManagementSocketClient` for placing and cancelling orders. Both support limit, market, and limit-maker orders, base-asset quantities, and numeric client order IDs. For market orders, provide `Price` as the reference price from which Lighter.Net calculates a 5% slippage bound.
+The shared socket client implements `IPlaceSpotOrderSocket` and `ICancelSpotOrderSocket` and `IPlaceFuturesOrderSocket` and `ICancelFuturesOrderSocket` for placing and cancelling orders. Both support limit, market, and limit-maker orders, base-asset quantities, and numeric client order IDs. For market orders, provide `Price` as the reference price from which Lighter.Net calculates a 5% slippage bound.
 
 Successful shared `PlaceSpotOrderAsync` and `PlaceFuturesOrderAsync` calls, over REST or socket, return a `SharedId` whose `Id` is null because the transaction response does not provide an exchange order ID. REST `ClosePositionAsync` behaves the same way. Retain the submitted client order ID or reconcile through order queries/updates; do not use the returned `SharedId.Id` as an order ID. Shared socket cancellation returns the requested order ID.
 
@@ -487,7 +483,7 @@ Shared WebSocket subscriptions return an `UpdateSubscription` in `.Data`. For sh
 
 ```csharp
 var socketClient = new LighterSocketClient();
-ITickerSocketClient tickerSocket = socketClient.ExchangeApi.SharedClient;
+ISubscribeTickerSocket tickerSocket = socketClient.ExchangeApi.SharedApi;
 
 var sub = await tickerSocket.SubscribeToTickerUpdatesAsync(
     new SubscribeTickerRequest(new SharedSymbol(TradingMode.Spot, "ETH", "USDC")),
@@ -504,7 +500,7 @@ Console.ReadLine();
 await socketClient.UnsubscribeAsync(sub.Data);
 ```
 
-Do not call `tickerSocket.UnsubscribeAsync(...)` on `ITickerSocketClient`; that shared interface does not expose the method.
+Do not call `tickerSocket.UnsubscribeAsync(...)` on `ISubscribeTickerSocket`; that shared interface does not expose the method.
 
 ## Symbol And Market Handling
 

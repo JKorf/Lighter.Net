@@ -66,20 +66,20 @@ Use this map when generating C#/.NET code for Lighter with `JKorf.Lighter.Net`. 
 
 ## Shared APIs
 
-Call `client.ExchangeApi.SharedClient.Discover()` before routing optional multi-exchange features.
+Use the exchange-level `ILighterSharedApiClient` aggregate's `GetCapability(...)` or `GetCapabilities(...)` methods for runtime capability lookup; use an API surface's `.SharedApi` property when the transport and API are known.
 
 | Intent | Shared API |
 | --- | --- |
-| Spot ticker | `ISpotTickerRestClient.GetSpotTickerAsync(...)` |
-| Futures ticker | `IFuturesTickerRestClient.GetFuturesTickerAsync(...)` |
-| Spot/futures symbol catalogs and filtered discovery | `ISpotSymbolRestClient`, `IFuturesSymbolRestClient` (includes display names and asset classifications) |
-| Order book | `IOrderBookRestClient.GetOrderBookAsync(...)` |
-| Recent trades | `IRecentTradeRestClient.GetRecentTradesAsync(...)` |
-| Balances | `IBalanceRestClient.GetBalancesAsync(...)` |
-| Spot/futures orders | `ISpotOrderRestClient`, `IFuturesOrderRestClient` |
-| Spot/futures socket order management | `ISpotOrderManagementSocketClient`, `IFuturesOrderManagementSocketClient` |
-| Funding-rate history | `IFundingRateRestClient.GetFundingRateHistoryAsync(...)` |
-| Shared subscriptions | `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, order/user-trade/position socket interfaces |
+| Spot ticker | `IGetTickerRest.GetTickerAsync(...)` |
+| Futures ticker | `IGetTickerRest.GetTickerAsync(...)` |
+| Spot/futures symbol catalogs and filtered discovery | `IGetSpotSymbolsRest`, `IGetFuturesSymbolsRest` (includes display names and asset classifications) |
+| Order book | `IGetOrderBookRest.GetOrderBookAsync(...)` |
+| Recent trades | `IGetRecentTradesRest.GetRecentTradesAsync(...)` |
+| Balances | `IGetBalancesRest.GetBalancesAsync(...)` |
+| Spot/futures orders | `IPlaceSpotOrderRest`, `IPlaceFuturesOrderRest` |
+| Spot/futures socket order management | `IPlaceSpotOrderSocket` and `ICancelSpotOrderSocket`, `IPlaceFuturesOrderSocket` and `ICancelFuturesOrderSocket` |
+| Funding-rate history | `IGetFundingRateHistoryRest.GetFundingRateHistoryAsync(...)` |
+| Shared subscriptions | `ISubscribeTickerSocket`, `ISubscribeAllTickersSocket`, `ISubscribeTradesSocket`, `ISubscribeBookTickerSocket`, `ISubscribeKlinesSocket`, `ISubscribeBalancesSocket`, order/user-trade/position socket interfaces |
 
 ## Result Rules
 

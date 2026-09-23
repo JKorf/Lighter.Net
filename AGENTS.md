@@ -9,7 +9,7 @@ description: Use Lighter.Net when generating C#/.NET code that interacts with th
 
 If the user asks for Lighter API access in C#/.NET, **use Lighter.Net**. Do not write raw `HttpClient` calls or custom WebSocket clients to Lighter endpoints; that approach loses typed models, signing, rate limiting, automatic reconnection, shared API support, and error handling.
 
-For multi-exchange code (Lighter + Binance + Bybit + OKX etc.), additionally use `CryptoExchange.Net.SharedApis` interfaces from `client.ExchangeApi.SharedClient`; call `.Discover()` before routing optional shared features.
+Use the exchange-level `ILighterSharedApiClient` aggregate's `GetCapability(...)` or `GetCapabilities(...)` methods for runtime capability lookup; use an API surface's `.SharedApi` property when the transport and API are known.
 
 ## Installation
 
@@ -64,12 +64,12 @@ The client exposes a single exchange API branch:
 restClient.ExchangeApi.ExchangeData // public market data, symbols, tokens, order books, trades, candles, funding, status
 restClient.ExchangeApi.Account      // accounts, limits, metadata, PnL, deposits, withdrawals, transfers, leverage, margin
 restClient.ExchangeApi.Trading      // place/edit/cancel orders, open/closed orders, user trades
-restClient.ExchangeApi.SharedClient // CryptoExchange.Net.SharedApis REST interfaces
+restClient.ExchangeApi.SharedApi // CryptoExchange.Net.SharedApis REST interfaces
 
 socketClient.ExchangeApi.ExchangeData // public market streams
 socketClient.ExchangeApi.Account      // account/balance/user-stat streams and account transactions
 socketClient.ExchangeApi.Trading      // order/trade/position streams and order transactions
-socketClient.ExchangeApi.SharedClient // CryptoExchange.Net.SharedApis socket interfaces
+socketClient.ExchangeApi.SharedApi // CryptoExchange.Net.SharedApis socket interfaces
 ```
 
 Do not generate `SpotApi`, `FuturesApi`, `UsdFuturesApi`, or `CoinFuturesApi` for Lighter.Net.
@@ -153,21 +153,20 @@ using Lighter.Net.Clients;
 using CryptoExchange.Net.SharedApis;
 
 var restClient = new LighterRestClient();
-var lighterShared = restClient.ExchangeApi.SharedClient;
+var lighterShared = restClient.ExchangeApi.SharedApi;
 
-var capabilities = lighterShared.Discover();
-Console.WriteLine($"{capabilities.Exchange} {capabilities.TypeName}");
+// Use the exchange-level `ILighterSharedApiClient` aggregate's `GetCapability(...)` or `GetCapabilities(...)` methods for runtime capability lookup; use an API surface's `.SharedApi` property when the transport and API are known.
 
 var symbol = new SharedSymbol(TradingMode.Spot, "ETH", "USDC");
-var ticker = await lighterShared.GetSpotTickerAsync(new GetTickerRequest(symbol));
+var ticker = await lighterShared.GetTickerAsync(new GetTickerRequest(symbol));
 if (!ticker.Success) { Console.WriteLine(ticker.Error); return; }
 ```
 
-Available shared REST interfaces include `ISpotSymbolRestClient`, `IFuturesSymbolRestClient`, `ISpotTickerRestClient`, `IFuturesTickerRestClient`, `IBookTickerRestClient`, `IRecentTradeRestClient`, `IOrderBookRestClient`, `IAssetsRestClient`, `IDepositRestClient`, `IWithdrawalRestClient`, `IFeeRestClient`, `IBalanceRestClient`, `ISpotOrderRestClient`, `IFuturesOrderRestClient`, `IFundingRateRestClient`, and leverage/open-interest interfaces.
+Available shared REST interfaces include `IGetSpotSymbolsRest`, `IGetFuturesSymbolsRest`, `IGetTickerRest`, `IGetBookTickerRest`, `IGetRecentTradesRest`, `IGetOrderBookRest`, `IGetAllAssetsRest`, `IGetDepositHistoryRest`, `IGetWithdrawalHistoryRest`, `IGetFeesRest`, `IGetBalancesRest`, `IPlaceSpotOrderRest`, `IPlaceFuturesOrderRest`, `IGetFundingRateHistoryRest`, and leverage/open-interest interfaces.
 
 Shared spot and futures symbol discovery supports request filters and cached symbol catalogs. Returned symbols include display names and asset metadata; perpetual base assets are classified as crypto, fiat, equity, commodity, or other TradFi from Lighter token metadata.
 
-Available shared socket interfaces include `ITickerSocketClient`, `ITickersSocketClient`, `ITradeSocketClient`, `IBookTickerSocketClient`, `IKlineSocketClient`, `IBalanceSocketClient`, `ISpotOrderSocketClient`, `IFuturesOrderSocketClient`, `IUserTradeSocketClient`, `IPositionSocketClient`, `ISpotOrderManagementSocketClient`, and `IFuturesOrderManagementSocketClient`.
+Available shared socket interfaces include `ISubscribeTickerSocket`, `ISubscribeAllTickersSocket`, `ISubscribeTradesSocket`, `ISubscribeBookTickerSocket`, `ISubscribeKlinesSocket`, `ISubscribeBalancesSocket`, `ISubscribeSpotOrdersSocket`, `ISubscribeFuturesOrdersSocket`, `ISubscribeUserTradesSocket`, `ISubscribePositionsSocket`, `IPlaceSpotOrderSocket` and `ICancelSpotOrderSocket`, and `IPlaceFuturesOrderSocket` and `ICancelFuturesOrderSocket`.
 
 Shared socket order management supports placing and cancelling spot and futures orders. Shared place-order calls and REST `ClosePositionAsync` return a successful `SharedId` with a null `Id`; retain the numeric client order ID or reconcile through order queries/updates instead of treating the result as an exchange order ID. For shared market orders, supply `Price` as the reference price used to calculate the 5% slippage bound.
 
