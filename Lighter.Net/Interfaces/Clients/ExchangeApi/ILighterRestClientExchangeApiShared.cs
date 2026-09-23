@@ -28,4 +28,50 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         IFundingRateRestClient
     {
     }
+
+    /// <summary>
+    /// Shared API interface. Shared APIs provide a common,
+    /// exchange-independent contract for accessing functionality across different
+    /// exchange client libraries.
+    /// </summary>
+    public interface ILighterRestClientExchangeSharedApi :
+        IGetKlinesRest,
+        IGetSpotSymbolsRest,
+        IGetFuturesSymbolsRest,
+        IGetTickerRest,
+        IGetAllTickersRest,
+        IGetBookTickerRest,
+        IGetRecentTradesRest,
+        IGetOrderBookRest,
+        IGetAssetRest,
+        IGetAllAssetsRest,
+        IGetDepositHistoryRest,
+        IGetWithdrawalHistoryRest,
+        IGetFeesRest,
+        IGetBalancesRest,
+        IPlaceSpotOrderRest,
+        IGetSpotOrderRest,
+        IGetOpenSpotOrdersRest,
+        IGetClosedSpotOrdersRest,
+        IGetSpotUserTradeHistoryRest,
+        IGetSpotOrderTradesRest,
+        ICancelSpotOrderRest,
+        IGetSpotOrderByClientOrderIdRest,
+        ICancelSpotOrderByClientOrderIdRest,
+        IGetLeverageRest,
+        ISetLeverageRest,
+        IGetOpenInterestRest,
+        IPlaceFuturesOrderRest,
+        IGetFuturesOrderRest,
+        IGetOpenFuturesOrdersRest,
+        IGetClosedFuturesOrdersRest,
+        IGetFuturesOrderTradesRest,
+        IGetFuturesUserTradeHistoryRest,
+        ICancelFuturesOrderRest,
+        IGetPositionsRest,
+        IGetFuturesOrderByClientOrderIdRest,
+        ICancelFuturesOrderByClientOrderIdRest,
+        IGetFundingRateHistoryRest
+    {
+    }
 }

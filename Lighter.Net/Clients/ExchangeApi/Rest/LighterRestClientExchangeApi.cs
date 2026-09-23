@@ -21,6 +21,8 @@ namespace Lighter.Net.Clients.ExchangeApi
     internal partial class LighterRestClientExchangeApi : RestApiClient<LighterEnvironment, LighterAuthenticationProvider, LighterCredentials>, ILighterRestClientExchangeApi
     {
         #region fields 
+        private readonly LighterRestClientExchangeSharedApi _sharedApi;
+
         protected override ErrorMapping ErrorMapping => LighterErrors.Errors;
 
         internal new LighterRestOptions ClientOptions => (LighterRestOptions)base.ClientOptions;
@@ -53,6 +55,8 @@ namespace Lighter.Net.Clients.ExchangeApi
             Account = new LighterRestClientExchangeApiAccount(this);
             ExchangeData = new LighterRestClientExchangeApiExchangeData(_logger, this);
             Trading = new LighterRestClientExchangeApiTrading(_logger, this);
+
+            _sharedApi = new LighterRestClientExchangeSharedApi(this);
         }
         #endregion
 
@@ -137,6 +141,8 @@ namespace Lighter.Net.Clients.ExchangeApi
         }
 
         /// <inheritdoc />
-        public ILighterRestClientExchangeApiShared SharedClient => this;
+        public ILighterRestClientExchangeApiShared SharedClient => _sharedApi;
+        /// <inheritdoc />
+        public ILighterRestClientExchangeSharedApi SharedApi => _sharedApi;
     }
 }

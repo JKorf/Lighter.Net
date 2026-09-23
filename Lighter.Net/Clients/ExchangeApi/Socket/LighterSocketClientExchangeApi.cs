@@ -28,6 +28,8 @@ namespace Lighter.Net.Clients.ExchangeApi
     internal partial class LighterSocketClientExchangeApi : SocketApiClient<LighterEnvironment, LighterAuthenticationProvider, LighterCredentials>, ILighterSocketClientExchangeApi
     {
         #region fields
+        private readonly LighterSocketClientExchangeSharedApi _sharedApi;
+
         protected override ErrorMapping ErrorMapping => LighterErrors.Errors;
         #endregion
 
@@ -51,6 +53,8 @@ namespace Lighter.Net.Clients.ExchangeApi
             Account = new LighterSocketClientExchangeApiAccount(_logger, this);
             ExchangeData = new LighterSocketClientExchangeApiExchangeData(_logger, this);
             Trading = new LighterSocketClientExchangeApiTrading(_logger, this);
+
+            _sharedApi = new LighterSocketClientExchangeSharedApi(this);
 
             RateLimiter = LighterExchange.RateLimiter.LighterSocket;
             MaxIndividualSubscriptionsPerConnection = 500;
@@ -82,7 +86,9 @@ namespace Lighter.Net.Clients.ExchangeApi
             => new LighterAuthenticationProvider(credentials);
 
         /// <inheritdoc />
-        public ILighterSocketClientExchangeApiShared SharedClient => this;
+        public ILighterSocketClientExchangeApiShared SharedClient => _sharedApi;
+        /// <inheritdoc />
+        public ILighterSocketClientExchangeSharedApi SharedApi => _sharedApi;
 
         /// <inheritdoc />
         public override string FormatSymbol(string baseAsset, string quoteAsset, TradingMode tradingMode, DateTime? deliverDate = null)
