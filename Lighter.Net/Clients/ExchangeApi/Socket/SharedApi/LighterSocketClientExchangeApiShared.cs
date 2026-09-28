@@ -55,5 +55,7 @@ namespace Lighter.Net.Clients.ExchangeApi
                 );
         }
 
+        /// <inheritdoc />
+        public Task UnsubscribeAllAsync() => _api.UnsubscribeAllAsync();
     }
 }
