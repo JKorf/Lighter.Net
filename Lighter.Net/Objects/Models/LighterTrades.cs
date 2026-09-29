@@ -221,5 +221,10 @@ public record LighterTrade
     /// </summary>
     [JsonPropertyName("integrator_taker_fee_collector_index")]
     public decimal IntegratorTakerFeeCollectorIndex { get; set; }
+    /// <summary>
+    /// ["<c>market_kind</c>"] Market kind
+    /// </summary>
+    [JsonPropertyName("market_kind")]
+    public string MarketKind { get; set; } = string.Empty;
 }
 

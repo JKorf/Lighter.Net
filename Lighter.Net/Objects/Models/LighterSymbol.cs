@@ -116,5 +116,26 @@ public record LighterSymbol
     /// </summary>
     [JsonPropertyName("multiplier")]
     public decimal Multiplier { get; set; }
+
+    /// <summary>
+    /// ["<c>open_interest</c>"] Open interest
+    /// </summary>
+    [JsonPropertyName("open_interest")]
+    public decimal OpenInterest { get; set; }
+    /// <summary>
+    /// ["<c>settlement_cap</c>"] Settlement cap
+    /// </summary>
+    [JsonPropertyName("settlement_cap")]
+    public decimal? SettlementCap { get; set; }
+    /// <summary>
+    /// ["<c>settlement_price</c>"] Settlement price
+    /// </summary>
+    [JsonPropertyName("settlement_price")]
+    public decimal? SettlementPrice { get; set; }
+    /// <summary>
+    /// ["<c>is_frozen</c>"] Is frozen
+    /// </summary>
+    [JsonPropertyName("is_frozen")]
+    public bool IsFrozen { get; set; }
 }
 

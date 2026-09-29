@@ -16,7 +16,7 @@ namespace Lighter.Net.UnitTests
     [NonParallelizable]
     public class LighterRestIntegrationTests : RestIntegrationTest<LighterRestClient>
     {
-        public override bool Run { get; set; } = false;
+        public override bool Run { get; set; } = true;
 
         public override LighterRestClient GetClient(ILoggerFactory loggerFactory)
         {
@@ -84,15 +84,39 @@ namespace Lighter.Net.UnitTests
         {
             var warnings = new List<Exception>();
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetStatusAsync(CancellationToken.None), false);
-            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSystemConfigAsync(CancellationToken.None), false);
-            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolsAsync(default, default, CancellationToken.None), false, compareNestedProperty: "order_books");
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSystemConfigAsync(CancellationToken.None), false, ignoreProperties:
+                [
+                    "fee_collector_account_index",
+                ]);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolsAsync(default, default, CancellationToken.None), false, compareNestedProperty: "order_books",
+                ignoreProperties: [
+                    // Undocument/unclear response fields
+                    "fee_collector_account_index",
+                    "start_timestamp",
+                    "end_timestamp",
+                    "default_price",
+                    "operator_account_index",
+                    "settlement_type",
+                    "outcome"
+                    ]);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetLayer1BasicInfoAsync(CancellationToken.None), false);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetAssetsAsync(default, CancellationToken.None), false, compareNestedProperty: "asset_details");
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetOrderBookAsync("ETH", default, CancellationToken.None), false, ignoreProperties: ["transaction_time"]);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetRecentTradesAsync("ETH", default, CancellationToken.None), false, compareNestedProperty: "trades", ignoreProperties: [
                 "ask_order_version", "bid_order_version"
                 ]);
-            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(default, default, CancellationToken.None), false, ignoreProperties: ["daily_chart", "market_margin_mode"]);
+            await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetSymbolDetailsAsync(default, default, CancellationToken.None), false,
+                ignoreProperties: [
+                    "daily_chart",
+                    "market_margin_mode",
+                    "fee_collector_account_index",
+                    "start_timestamp",
+                    "end_timestamp",
+                    "default_price",
+                    "operator_account_index",
+                    "settlement_type",
+                    "outcome"
+                    ]);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetExchangeStatsAsync(CancellationToken.None), false);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetAnnouncementsAsync(CancellationToken.None), false);
             await RunAndCheckResult(warnings, client => client.ExchangeApi.ExchangeData.GetKlinesAsync("ETH", KlineInterval.OneDay, default, default, default, CancellationToken.None), false);
