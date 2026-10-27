@@ -36,18 +36,19 @@ namespace Lighter.Net.Clients.ExchangeApi
                         return;
 
                     handler(update.ToType<SharedUserTrade[]>(trades.Select(x => new SharedUserTrade(
-                                ExchangeSymbolCache.ParseSymbol(x.MarketId >= 2048 ? _topicSpotId : _topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId)),
-                                LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
-                                (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
-                                x.TradeId.ToString(),
-                                x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
-                                new SharedOrderQuantity(x.Quantity),
-                                x.Price,
-                                x.Timestamp)
-                        {
-                            ClientOrderId = (x.BidAccountId == _api.ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                            Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
-                            Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
+                            ExchangeSymbolCache.ParseSymbol(x.MarketId >= 2048 ? _topicSpotId : _topicFuturesId, _api.EnvironmentName, null, LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId)),
+                            LighterUtils.GetSymbolName(_api.EnvironmentName, x.MarketId) ?? string.Empty,
+                            (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidId : x.AskId).ToString(),
+                            x.TradeId.ToString(),
+                            x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex ? SharedOrderSide.Sell : SharedOrderSide.Buy,
+                            new SharedOrderQuantity(x.Quantity),
+                            x.Price,
+                            x.Timestamp)
+                    {
+                        ClientOrderId = (x.BidAccountId == _api.ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
+                        Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee * x.Price / 1_000_000 : x.Quantity * x.TakerFee * x.Price / 1_000_000,
+                        FeeAsset = "USDC",
+                        Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
                     }).ToArray()));
                 },
                 ct: ct).ConfigureAwait(false);

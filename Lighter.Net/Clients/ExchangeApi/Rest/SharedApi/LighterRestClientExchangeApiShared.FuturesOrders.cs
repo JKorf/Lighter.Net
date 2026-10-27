@@ -282,7 +282,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 x.Timestamp)
             {
                 ClientOrderId = (x.BidAccountId == _api.ApiCredentials!.Credential!.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee * x.Price / 1_000_000 : x.Quantity * x.TakerFee * x.Price / 1_000_000,
+                FeeAsset = "USDC",
                 Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
             }).ToArray());
 
@@ -351,7 +352,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                         x.Timestamp)
                     {
                         ClientOrderId = (x.BidAccountId == _api.ApiCredentials.Credential.AccountIndex ? x.BidClientId : x.AskClientId).ToString(),
-                        Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee : x.Quantity * x.TakerFee,
+                        Fee = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? x.Quantity * x.MakerFee * x.Price / 1_000_000 : x.Quantity * x.TakerFee * x.Price / 1_000_000,
+                        FeeAsset = "USDC",
                         Role = x.IsMakerAsk == (x.AskAccountId == _api.ApiCredentials.Credential.AccountIndex) ? SharedRole.Maker : SharedRole.Taker
                     }).ToArray(), nextPageRequest);
 
