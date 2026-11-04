@@ -11,6 +11,7 @@ using Lighter.Net;
 using Lighter.Net.Clients;
 using Lighter.Net.Enums;
 using Lighter.Net.Objects.Models;
+using CryptoExchange.Net.Web3;
 
 var client = new LighterRestClient(options =>
 {

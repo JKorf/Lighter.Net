@@ -11,6 +11,7 @@
 
 using CryptoExchange.Net.SharedApis;
 using Lighter.Net.Clients;
+using CryptoExchange.Net.Web3;
 
 // ---- THE PATTERN ----
 // Each exchange client exposes a `.SharedClient` property on its API surfaces.

@@ -8,6 +8,7 @@ using Lighter.Net.Clients;
 using Lighter.Net.Objects.Models;
 using Lighter.Net.Objects.Options;
 using Lighter.Net.Objects;
+using CryptoExchange.Net.Web3;
 
 namespace Lighter.Net.UnitTests
 {
@@ -22,7 +23,7 @@ namespace Lighter.Net.UnitTests
 
             var client = new LighterSocketClient(Options.Create(new LighterSocketOptions
             {
-                ApiCredentials = new LighterCredentials(EthKey.FromPublicKey("1"), 1, 1, "1"),
+                ApiCredentials = new LighterCredentials(EthKey.FromPublicAddress("0x0000000000000000000000000000000000000000"), 1, 1, "1"),
                 Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress)
             }), logger);
             var tester = new SocketSubscriptionValidator<LighterSocketClient>(client, "Subscriptions/Exchange", "wss://mainnet.zklighter.elliot.ai/stream");

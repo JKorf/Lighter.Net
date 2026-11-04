@@ -10,6 +10,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.SharedApis;
 using Lighter.Net;
 using Lighter.Net.Clients;
+using CryptoExchange.Net.Web3;
 
 var client = new LighterRestClient(options =>
 {

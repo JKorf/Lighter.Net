@@ -13,6 +13,7 @@
 using Lighter.Net;
 using Lighter.Net.Clients;
 using Lighter.Net.Enums;
+using CryptoExchange.Net.Web3;
 
 // ---- 1. PUBLIC CLIENT (no credentials needed for market data) ----
 // Reuse this client across the application. Do not create a new client per request.
@@ -48,7 +49,7 @@ var tradingClient = new LighterRestClient(options =>
     options.ApiCredentials = new LighterCredentials(
         ethKey: EthKey.FromPrivateKey("PRIVATE_KEY"),
 		// OR:
-        // ethKey: EthKey.FromPublicKey("PULBIC_KEY"),
+        // ethKey: EthKey.FromPublicAddress("PULBIC_KEY"),
         accountIndex: 123,
         apiKeyIndex: 5,
         apiSecret: "API_SECRET");

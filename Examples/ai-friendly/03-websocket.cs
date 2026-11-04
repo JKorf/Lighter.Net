@@ -9,6 +9,7 @@
 using Lighter.Net;
 using Lighter.Net.Clients;
 using Lighter.Net.Enums;
+using CryptoExchange.Net.Web3;
 
 // ---- 1. PUBLIC SOCKET CLIENT - for market data streams ----
 // Reuse a single client instance across subscriptions. The client handles

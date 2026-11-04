@@ -1,4 +1,5 @@
 using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Web3;
 using Lighter.Net.Objects;
 using System;
 

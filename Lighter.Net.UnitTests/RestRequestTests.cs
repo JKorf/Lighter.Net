@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Lighter.Net.Clients;
 using Lighter.Net.Enums;
 using Lighter.Net.Objects;
+using CryptoExchange.Net.Web3;
 
 namespace Lighter.Net.UnitTests
 {
@@ -20,7 +21,7 @@ namespace Lighter.Net.UnitTests
             var client = new LighterRestClient(opts =>
             {
                 opts.AutoTimestamp = false;
-                opts.ApiCredentials = new LighterCredentials(EthKey.FromPublicKey("123"), 0, 1, "456");
+                opts.ApiCredentials = new LighterCredentials(EthKey.FromPublicAddress("0x0000000000000000000000000000000000000000"), 0, 1, "456");
                 opts.Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress);
             });
             var tester = new RestRequestValidator<LighterRestClient>(client, "Endpoints/Exchange/Account", "https://mainnet.zklighter.elliot.ai", IsAuthenticated);
@@ -64,7 +65,7 @@ namespace Lighter.Net.UnitTests
             var client = new LighterRestClient(opts =>
             {
                 opts.AutoTimestamp = false;
-                opts.ApiCredentials = new LighterCredentials(EthKey.FromPublicKey("123"), 0, 1, "456");
+                opts.ApiCredentials = new LighterCredentials(EthKey.FromPublicAddress("0x0000000000000000000000000000000000000000"), 0, 1, "456");
                 opts.Environment = LighterEnvironment.CreateCustom("UnitTest", LighterApiAddresses.Default.RestClientAddress, LighterApiAddresses.Default.SocketClientAddress);
             });
             var tester = new RestRequestValidator<LighterRestClient>(client, "Endpoints/Exchange/Trading", "https://mainnet.zklighter.elliot.ai", IsAuthenticated);

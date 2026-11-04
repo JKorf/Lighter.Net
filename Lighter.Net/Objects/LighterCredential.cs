@@ -1,4 +1,5 @@
 ﻿using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Web3;
 using System;
 
 namespace Lighter.Net.Objects
@@ -32,7 +33,7 @@ namespace Lighter.Net.Objects
         /// <param name="accountIndex">Account index</param>
         /// <param name="apiKeyIndex">API key index</param>
         /// <param name="privateApiKey">API key secret</param>
-        public LighterCredential(EthKey ethKey, long accountIndex, int apiKeyIndex, string privateApiKey) : base(ethKey.PublicKey)
+        public LighterCredential(EthKey ethKey, long accountIndex, int apiKeyIndex, string privateApiKey) : base(ethKey.PublicAddress)
         {
             EthKey = ethKey;
             ApiKeyIndex = apiKeyIndex;

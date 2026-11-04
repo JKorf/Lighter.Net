@@ -1,3 +1,5 @@
+using CryptoExchange.Net.Web3;
+using Lighter.Net;
 using Lighter.Net.Interfaces.Clients;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,13 +12,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddLighter();
 
 // OR to provide API credentials for accessing private endpoints, or setting other options:
-/*
-builder.Services.AddLighter(options =>
-{
-    options.ApiCredentials = new LighterCredentials("<PUBLICADDRESS>", ACCOUNT_INDEX, APIKEY_INDEX, "<API_SECRET>");
-    options.Rest.RequestTimeout = TimeSpan.FromSeconds(5);
-});
-*/
+
+//builder.Services.AddLighter(options =>
+//{
+//    options.ApiCredentials = new LighterCredentials(EthKey.FromPublicAddress("<PUBLICADDRESS>"), ACCOUNT_INDEX, APIKEY_INDEX, "<API_SECRET>");
+//    options.Rest.RequestTimeout = TimeSpan.FromSeconds(5);
+//});
+
 
 var app = builder.Build();
 app.UseSwagger();

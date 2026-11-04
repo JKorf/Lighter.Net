@@ -10,6 +10,7 @@ using Lighter.Net.Enums;
 using Lighter.Net.Objects;
 using System.Threading;
 using System.Collections.Generic;
+using CryptoExchange.Net.Web3;
 
 namespace Lighter.Net.UnitTests
 {
@@ -31,7 +32,7 @@ namespace Lighter.Net.UnitTests
                 AutoTimestamp = false,
                 OutputOriginalData = true,
                 ApiCredentials = pk == null ? null : new LighterCredentials(
-                    EthKey.FromPublicKey(pk),
+                    EthKey.FromPublicAddress(pk),
                     accountIndex: accountIndex,
                     apiKeyIndex: apiKeyIndex,
                     apiSecret: sec
