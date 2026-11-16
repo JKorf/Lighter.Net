@@ -13,7 +13,7 @@ using Lighter.Net.Enums;
 using Lighter.Net.Objects.Models;
 using CryptoExchange.Net.Web3;
 
-var client = new LighterRestClient(options =>
+using var client = new LighterRestClient(options =>
 {
     options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 

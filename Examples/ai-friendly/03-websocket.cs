@@ -14,7 +14,7 @@ using CryptoExchange.Net.Web3;
 // ---- 1. PUBLIC SOCKET CLIENT - for market data streams ----
 // Reuse a single client instance across subscriptions. The client handles
 // connection management and automatic reconnects.
-var publicSocket = new LighterSocketClient();
+using var publicSocket = new LighterSocketClient();
 
 var tickerSub = await publicSocket.ExchangeApi.ExchangeData.SubscribeToSpotTickerUpdatesAsync(
     "ETH/USDC",
@@ -55,7 +55,7 @@ if (!klineSub.Success)
 }
 
 // ---- 2. AUTHENTICATED SOCKET CLIENT - for user data ----
-var authSocket = new LighterSocketClient(options =>
+using var authSocket = new LighterSocketClient(options =>
 {
     options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });

@@ -12,7 +12,7 @@ using Lighter.Net;
 using Lighter.Net.Clients;
 using CryptoExchange.Net.Web3;
 
-var client = new LighterRestClient(options =>
+using var client = new LighterRestClient(options =>
 {
     options.ApiCredentials = new LighterCredentials(EthKey.FromPrivateKey("PRIVATE_KEY"), 123, 5, "API_SECRET");
 });
@@ -44,6 +44,7 @@ else
 // ---- 2. SIMPLE RETRY WITH BACKOFF ----
 // Retry only on transient errors, for example a temporary network issue or
 // server-side throttling. Do not retry validation errors or insufficient balance.
+// Public reads only: reconcile uncertain signed transactions before considering resubmission.
 async Task<HttpResult<T>> WithRetry<T>(
     Func<Task<HttpResult<T>>> call,
     int maxAttempts = 3)
@@ -93,7 +94,7 @@ if (!ticker.Success)
 
 // ---- 4. SHARED API CALL RESULT ----
 // Shared APIs use the same .Success/.Error pattern and allow exchange-agnostic code.
-var shared = client.ExchangeApi.SharedClient;
+var shared = client.ExchangeApi.SharedApi;
 var support = await shared.SupportsSpotSymbolAsync(new SharedSymbol(TradingMode.Spot, "ETH", "USDC"));
 if (!support.Success)
 {
@@ -112,4 +113,4 @@ else
 // Common variations:
 //   With CancellationToken:    pass `ct: cancellationToken` to any method.
 //   With timeout per request:  options.RequestTimeout = TimeSpan.FromSeconds(10);
-//   Polly integration:         use Error.IsTransient as the retry predicate.
+//   Public-read retries: use Error.IsTransient with bounded backoff; reconcile uncertain writes first.

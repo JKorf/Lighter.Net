@@ -1,13 +1,13 @@
 // 01-quickstart.cs
 //
 // Demonstrates: client setup, public market data, authenticated account calls,
-// and the safe shape for placing an order.
+// and an explicit order-submission pattern.
 //
 // Setup:
 //   dotnet new console -n LighterQuickstart && cd LighterQuickstart
 //   dotnet add package JKorf.Lighter.Net
 //   Copy this file content into Program.cs
-//   Substitute PUBLIC_ADDRESS / ACCOUNT_INDEX / API_KEY_INDEX / API_SECRET below
+//   Substitute PRIVATE_KEY / ACCOUNT_INDEX / API_KEY_INDEX / API_SECRET below
 //   dotnet run
 
 using Lighter.Net;
@@ -17,7 +17,7 @@ using CryptoExchange.Net.Web3;
 
 // ---- 1. PUBLIC CLIENT (no credentials needed for market data) ----
 // Reuse this client across the application. Do not create a new client per request.
-var publicClient = new LighterRestClient();
+using var publicClient = new LighterRestClient();
 
 // Lighter uses symbols such as "ETH/USDC" for spot and "ETH" for perps.
 var symbolDetails = await publicClient.ExchangeApi.ExchangeData.GetSymbolDetailsAsync("ETH/USDC");
@@ -44,7 +44,7 @@ Console.WriteLine($"Order book snapshot received: {orderBook.Data}");
 // ---- 2. AUTHENTICATED CLIENT (for account / trading) ----
 // Lighter credentials include the L1 info, account index, API key index,
 // and API secret. Keep secrets out of source control in real applications.
-var tradingClient = new LighterRestClient(options =>
+using var tradingClient = new LighterRestClient(options =>
 {
     options.ApiCredentials = new LighterCredentials(
         ethKey: EthKey.FromPrivateKey("PRIVATE_KEY"),

@@ -1,31 +1,15 @@
-# AI-Friendly Examples
+# Lighter.Net examples
 
-These examples are optimized for AI coding assistants and quick onboarding. Each file is:
+Each file is an independent console program. Install `JKorf.Lighter.Net` in a console project and copy one program to `Program.cs`.
 
-- **Compilable** - drop into a console project with `dotnet add package JKorf.Lighter.Net` and it builds.
-- **Self-contained** - single file, no external setup, no shared helpers.
-- **Heavily commented** - explains why each line matters, not just what it does.
-- **Idiomatic** - follows current Lighter.Net 1.x and CryptoExchange.Net 12.x patterns.
-
-## Files
-
-| File | What it shows |
+| Program | Workflow |
 |---|---|
-| `01-quickstart.cs` | Client setup, public market data, authenticated account calls, safe order skeleton |
-| `02-trading.cs` | Leverage, margin, order placement, order lookup, cancellation, and batch order shape |
-| `03-websocket.cs` | Public ticker/trade/kline streams and authenticated user streams with proper teardown |
-| `04-multi-exchange.cs` | `CryptoExchange.Net.SharedApis` pattern for exchange-agnostic code, capability discovery, and shared subscriptions |
-| `05-error-handling.cs` | `HttpResult`, `WebSocketResult`, `QueryResult`, `ExchangeCallResult`, retry, and common error scenarios |
+| [01-quickstart.cs](01-quickstart.cs) | Public/account reads and order-submission pattern |
+| [02-trading.cs](02-trading.cs) | Leverage, optional margin/order/batch submissions, order queries and cancellation |
+| [03-websocket.cs](03-websocket.cs) | Public/private subscriptions and cleanup |
+| [04-multi-exchange.cs](04-multi-exchange.cs) | Shared API V2 ticker, symbol catalog and subscription |
+| [05-error-handling.cs](05-error-handling.cs) | Results, public-read retries, and Shared symbol support |
 
-## Running
+Replace credential/index placeholders for intended account operations. The trading program changes leverage when executed, even with its optional order flags disabled. Signed operations require a compatible native signer binary. Read [operational considerations](../../.claude/skills/lighter-net/references/safety.md) first; see [usage snippets](../../.claude/skills/lighter-net/references/usage.md) for API-key-only and L1 credential roles.
 
-```bash
-dotnet new console -n MyLighterApp
-cd MyLighterApp
-dotnet add package JKorf.Lighter.Net
-# Copy the example .cs file content into Program.cs
-# Replace PUBLIC_ADDRESS / ACCOUNT_INDEX / API_KEY_INDEX / API_SECRET placeholders where needed
-dotnet run
-```
-
-Authenticated examples can place or cancel real orders. Read the comments and use conservative parameters before running trading code against a live account.
+`AiExampleCompileTests` compiles the programs without running exchange operations or testing native signing.
