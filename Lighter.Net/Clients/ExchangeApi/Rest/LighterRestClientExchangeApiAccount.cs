@@ -48,7 +48,7 @@ namespace Lighter.Net.Clients.ExchangeApi
         /// <inheritdoc />
         public CallResult<(string PublicKey, string PrivateKey)> GenerateApiKey()
         {
-            var (apiKey, secret) = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).GenerateAPIKey();
+            var (secret, apiKey) = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).GenerateAPIKey();
             return CallResult.Ok((apiKey, secret));
         }
 
