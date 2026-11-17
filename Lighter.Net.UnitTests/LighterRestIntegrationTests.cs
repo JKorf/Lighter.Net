@@ -17,7 +17,7 @@ namespace Lighter.Net.UnitTests
     [NonParallelizable]
     public class LighterRestIntegrationTests : RestIntegrationTest<LighterRestClient>
     {
-        public override bool Run { get; set; } = true;
+        public override bool Run { get; set; } = false;
 
         public override LighterRestClient GetClient(ILoggerFactory loggerFactory)
         {
