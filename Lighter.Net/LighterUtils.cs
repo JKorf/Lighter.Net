@@ -125,7 +125,7 @@ namespace Lighter.Net
             _symbolDictionary[environmentName] = data.OrderBooks;
         }
 
-        internal static int? GetSymbolId(string environmentName, string name)
+        internal static long? GetSymbolId(string environmentName, string name)
         {
             if (!_symbolDictionary.TryGetValue(environmentName, out var symbols))
                 return null;

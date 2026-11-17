@@ -97,6 +97,8 @@ namespace Lighter.Net.Clients.ExchangeApi
             bool? reduceOnly = null,
             decimal? triggerPrice = null,
             DateTime? orderExpiry = null,
+            SelfTradeBehavior? stpMode = null,
+            SelfTradeEquality? stpEquality = null,
             long? nonce = null,
             CancellationToken ct = default)
         {
@@ -153,6 +155,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                 integratorFeeAccountIndex,
                 integratorFeePercentage,
                 integratorFeePercentage,
+                (byte)(stpMode == null ? 0 : (int)stpMode),
+                (byte)(stpEquality == null ? 0 : (int)stpEquality),
                 0x1,
                 nonce.Value,
                 _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,
@@ -173,6 +177,8 @@ namespace Lighter.Net.Clients.ExchangeApi
         /// <inheritdoc />
         public async Task<QueryResult<LighterSocketTransactionsResult>> PlaceMultipleOrdersAsync(
             IEnumerable<LighterOrderRequest> orders,
+            SelfTradeBehavior? stpMode = null,
+            SelfTradeEquality? stpEquality = null,
             long? nonce = null,
             CancellationToken ct = default)
         {
@@ -233,6 +239,8 @@ namespace Lighter.Net.Clients.ExchangeApi
                     integratorFeeAccountIndex,
                     integratorFeePercentage,
                     integratorFeePercentage,
+                    (byte)(stpMode == null ? 0 : (int)stpMode),
+                    (byte)(stpEquality == null ? 0 : (int)stpEquality),
                     0x1,
                     nonce.Value,
                     _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,
@@ -266,6 +274,9 @@ namespace Lighter.Net.Clients.ExchangeApi
             decimal quantity,
             decimal price,
             decimal? triggerPrice = null,
+            long? orderVersion = null,
+            SelfTradeBehavior? stpMode = null,
+            SelfTradeEquality? stpEquality = null,
             long? nonce = null,
             CancellationToken ct = default)
         {
@@ -308,8 +319,11 @@ namespace Lighter.Net.Clients.ExchangeApi
                 integratorFeeAccountIndex,
                 integratorFeePercentage,
                 integratorFeePercentage,
+                (byte)(stpMode == null ? 0 : (int)stpMode),
+                (byte)(stpEquality == null ? 0 : (int)stpEquality),
                 0x1,
                 nonce.Value,
+                orderVersion ?? 0,
                 _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,
                 _baseClient.ApiCredentials!.Credential!.AccountIndex);
 
@@ -371,7 +385,8 @@ namespace Lighter.Net.Clients.ExchangeApi
         /// <inheritdoc />
         public async Task<QueryResult<LighterSocketTransactionResult>> CancelAllOrdersAsync(
             TimeInForce timeInForce,
-            long? nonce,
+            string? symbol = null,
+            long? nonce = null,
             CancellationToken ct = default)
         {
             if (!_baseClient.Authenticated)
@@ -386,9 +401,20 @@ namespace Lighter.Net.Clients.ExchangeApi
                 nonce = nonceResult.Data;
             }
 
+            long marketIndex = 0;
+            if (!string.IsNullOrEmpty(symbol))
+            {
+                var symbolInfo = await _baseClient.GetSymbolInfoAsync(symbol!).ConfigureAwait(false);
+                if (!symbolInfo.Success)
+                    return QueryResult.Fail<LighterSocketTransactionResult>(_baseClient.Exchange, symbolInfo.Error!);
+
+                marketIndex = symbolInfo.Data.MarketId;
+            }
+
             var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignCancelAllOrders(
                 (int)timeInForce,
                 0,
+                marketIndex,
                 0x1,
                 nonce.Value,
                 _baseClient.ApiCredentials!.Credential!.ApiKeyIndex,

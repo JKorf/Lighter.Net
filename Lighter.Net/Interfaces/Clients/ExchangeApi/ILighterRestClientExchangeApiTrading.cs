@@ -32,6 +32,8 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         /// <param name="reduceOnly">Reduce only order</param>
         /// <param name="triggerPrice">Order trigger price</param>
         /// <param name="orderExpiry">Order expiry. If not provided will be set to 24h</param>
+        /// <param name="stpMode">Self trade behavior mode</param>
+        /// <param name="stpEquality">Self trade equality mode</param>
         /// <param name="nonce">The nonce, will be set automatically if not provided.</param>
         /// <param name="ct">Cancellation token</param>
         Task<HttpResult<LighterTransactionResult>> PlaceOrderAsync(
@@ -45,6 +47,8 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
             bool? reduceOnly = null,
             decimal? triggerPrice = null,
             DateTime? orderExpiry = null,
+            SelfTradeBehavior? stpMode = null,
+            SelfTradeEquality? stpEquality = null,
             long? nonce = null,
             CancellationToken ct = default);
 
@@ -58,10 +62,14 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         /// </para>
         /// </summary>
         /// <param name="orders">Orders</param>
+        /// <param name="stpMode">Self trade behavior mode</param>
+        /// <param name="stpEquality">Self trade equality mode</param>
         /// <param name="nonce">The nonce, will be set automatically if not provided.</param>
         /// <param name="ct">Cancellation token</param>
         Task<HttpResult<LighterTransactionsResult>> PlaceMultipleOrdersAsync(
             IEnumerable<LighterOrderRequest> orders,
+            SelfTradeBehavior? stpMode = null,
+            SelfTradeEquality? stpEquality = null,
             long? nonce = null,
             CancellationToken ct = default);
 
@@ -79,6 +87,9 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         /// <param name="quantity">New quantity</param>
         /// <param name="price">New price</param>
         /// <param name="triggerPrice">New trigger price</param>
+        /// <param name="orderVersion">New order version</param>
+        /// <param name="stpMode">Self trade behavior mode</param>
+        /// <param name="stpEquality">Self trade equality mode</param>
         /// <param name="nonce">The nonce, will be set automatically if not provided.</param>
         /// <param name="ct">Cancellation token</param>
         Task<HttpResult<LighterTransactionResult>> EditOrderAsync(
@@ -87,6 +98,9 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
             decimal quantity,
             decimal price,
             decimal? triggerPrice = null,
+            long? orderVersion = null,
+            SelfTradeBehavior? stpMode = null,
+            SelfTradeEquality? stpEquality = null,
             long? nonce = null,
             CancellationToken ct = default);
 
@@ -119,10 +133,12 @@ namespace Lighter.Net.Interfaces.Clients.ExchangeApi
         /// </para>
         /// </summary>
         /// <param name="timeInForce">Time in force filter</param>
+        /// <param name="symbol">Filter by symbol name, for example `ETH/USDC` for spot or `ETH` for perps</param>
         /// <param name="nonce">The nonce, will be set automatically if not provided.</param>
         /// <param name="ct">Cancellation token</param>
         Task<HttpResult<LighterTransactionResult>> CancelAllOrdersAsync(
             TimeInForce timeInForce,
+            string? symbol = null,
             long? nonce = null,
             CancellationToken ct = default);
 

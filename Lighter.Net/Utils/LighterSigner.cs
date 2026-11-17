@@ -134,7 +134,7 @@ namespace Lighter.Net.Utils
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate SignedTxResponse SignCreateOrderDelegate(
-            int marketIndex,
+            long marketIndex,
             long clientOrderIndex,
             long baseAmount,
             int price,
@@ -147,6 +147,8 @@ namespace Lighter.Net.Utils
             long integratorAccountIndex,
             int integratorTakerFee,
             int integratorMakerFee,
+            byte selfTradeBehaviorMode,
+            byte selfTradeEqualityMode,
             byte skipNonce,
             long nonce,
             int apiKeyIndex,
@@ -160,13 +162,15 @@ namespace Lighter.Net.Utils
             long integratorAccountIndex,
             int integratorTakerFee,
             int integratorMakerFee,
+            byte selfTradeBehaviorMode,
+            byte selfTradeEqualityMode,
             byte skipNonce,
             long nonce,
             int apiKeyIndex,
             long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate SignedTxResponse SignCancelOrderDelegate(int marketIndex, long orderIndex, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
+        private delegate SignedTxResponse SignCancelOrderDelegate(long marketIndex, long orderIndex, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate SignedTxResponse SignWithdrawDelegate(int assetIndex, int routeType, ulong amount, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
@@ -175,11 +179,11 @@ namespace Lighter.Net.Utils
         private delegate SignedTxResponse SignCreateSubAccountDelegate(byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate SignedTxResponse SignCancelAllOrdersDelegate(int timeInForce, long time, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
+        private delegate SignedTxResponse SignCancelAllOrdersDelegate(int timeInForce, long time, long marketIndex, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate SignedTxResponse SignModifyOrderDelegate(
-            int marketIndex, 
+            long marketIndex, 
             long index, 
             long baseAmount, 
             long price, 
@@ -187,8 +191,11 @@ namespace Lighter.Net.Utils
             long integratorAccountIndex,
             int integratorTakerFee,
             int integratorMakerFee,
+            byte selfTradeBehaviorMode,
+            byte selfTradeEqualityMode,
             byte skipNonce,
             long nonce, 
+            long orderVersion,
             int apiKeyIndex, 
             long accountIndex);
 
@@ -219,13 +226,13 @@ namespace Lighter.Net.Utils
         private delegate SignedTxResponse SignBurnSharesDelegate(long publicPoolIndex, long shareAmount, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate SignedTxResponse SignUpdateLeverageDelegate(int marketIndex, int initialMarginFraction, int marginMode, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
+        private delegate SignedTxResponse SignUpdateLeverageDelegate(long marketIndex, int initialMarginFraction, int marginMode, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate StrOrErr CreateAuthTokenDelegate(long deadline, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate SignedTxResponse SignUpdateMarginDelegate(int marketIndex, long usdcAmount, int direction, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
+        private delegate SignedTxResponse SignUpdateMarginDelegate(long marketIndex, long usdcAmount, int direction, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate SignedTxResponse SignApproveIntegratorDelegate(long integratorIndex, int maxPerpsTakerFee, int maxPerpsMakerFee, int maxSpotTakerFee, int maxSpotMakerFee, long approvalExpiry, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex);
@@ -305,7 +312,7 @@ namespace Lighter.Net.Utils
         }
 
         public SignedTx SignCreateOrder(
-            int marketIndex,
+            long marketIndex,
             long clientOrderIndex,
             long baseAmount,
             int price,
@@ -318,6 +325,8 @@ namespace Lighter.Net.Utils
             long integratorAccountIndex,
             int integratorTakerFee,
             int integratorMakerFee,
+            byte selfTradeBehaviorMode,
+            byte selfTradeEqualityMode,
             byte skipNonce,
             long nonce,
             int apiKeyIndex,
@@ -328,7 +337,7 @@ namespace Lighter.Net.Utils
             var r = _signCreateOrder(
                 marketIndex, clientOrderIndex, baseAmount, price, isAsk, orderType, timeInForce,
                 reduceOnly, triggerPrice, orderExpiry, integratorAccountIndex, integratorTakerFee,
-                integratorMakerFee, skipNonce, nonce, apiKeyIndex, accountIndex);
+                integratorMakerFee, selfTradeBehaviorMode, selfTradeEqualityMode, skipNonce, nonce, apiKeyIndex, accountIndex);
 
             return ParseSignedTx(r);
         }
@@ -339,6 +348,8 @@ namespace Lighter.Net.Utils
             long integratorAccountIndex,
             int integratorTakerFee,
             int integratorMakerFee,
+            byte selfTradeBehaviorMode,
+            byte selfTradeEqualityMode,
             byte skipNonce,
             long nonce,
             int apiKeyIndex,
@@ -356,7 +367,7 @@ namespace Lighter.Net.Utils
             try
             {
                 var ptr = handle.AddrOfPinnedObject();
-                var r = _signCreateGroupedOrders(groupingType, ptr, arr.Length, integratorAccountIndex, integratorTakerFee, integratorMakerFee, skipNonce, nonce, apiKeyIndex, accountIndex);
+                var r = _signCreateGroupedOrders(groupingType, ptr, arr.Length, integratorAccountIndex, integratorTakerFee, integratorMakerFee, selfTradeBehaviorMode, selfTradeEqualityMode, skipNonce, nonce, apiKeyIndex, accountIndex);
                 return ParseSignedTx(r);
             }
             finally
@@ -365,7 +376,7 @@ namespace Lighter.Net.Utils
             }
         }
 
-        public SignedTx SignCancelOrder(int marketIndex, long orderIndex, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
+        public SignedTx SignCancelOrder(long marketIndex, long orderIndex, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
             => ParseSignedTx(_signCancelOrder(marketIndex, orderIndex, skipNonce, nonce, apiKeyIndex, accountIndex));
 
         public SignedTx SignWithdraw(int assetIndex, int routeType, ulong amount, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
@@ -374,11 +385,11 @@ namespace Lighter.Net.Utils
         public SignedTx SignCreateSubAccount(byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
             => ParseSignedTx(_signCreateSubAccount(skipNonce, nonce, apiKeyIndex, accountIndex));
 
-        public SignedTx SignCancelAllOrders(int timeInForce, long time, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
-            => ParseSignedTx(_signCancelAllOrders(timeInForce, time, skipNonce, nonce, apiKeyIndex, accountIndex));
+        public SignedTx SignCancelAllOrders(int timeInForce, long time, long marketIndex, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
+            => ParseSignedTx(_signCancelAllOrders(timeInForce, time, marketIndex, skipNonce, nonce, apiKeyIndex, accountIndex));
 
         public SignedTx SignModifyOrder(
-            int marketIndex,
+            long marketIndex,
             long index,
             long baseAmount, 
             long price,
@@ -386,8 +397,11 @@ namespace Lighter.Net.Utils
             long integratorAccountIndex,
             int integratorTakerFee,
             int integratorMakerFee,
+            byte selfTradeBehaviorMode,
+            byte selfTradeEqualityMode,
             byte skipNonce,
             long nonce, 
+            long orderVersion,
             int apiKeyIndex,
             long accountIndex)
             => ParseSignedTx(
@@ -400,8 +414,11 @@ namespace Lighter.Net.Utils
                     integratorAccountIndex,
                     integratorTakerFee, 
                     integratorMakerFee,
+                    selfTradeBehaviorMode,
+                    selfTradeEqualityMode,
                     skipNonce,
                     nonce,
+                    orderVersion,
                     apiKeyIndex,
                     accountIndex));
 
@@ -428,7 +445,7 @@ namespace Lighter.Net.Utils
         public SignedTx SignBurnShares(long publicPoolIndex, long shareAmount, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
             => ParseSignedTx(_signBurnShares(publicPoolIndex, shareAmount, skipNonce, nonce, apiKeyIndex, accountIndex));
 
-        public SignedTx SignUpdateLeverage(int marketIndex, int initialMarginFraction, int marginMode, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
+        public SignedTx SignUpdateLeverage(long marketIndex, int initialMarginFraction, int marginMode, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
             => ParseSignedTx(_signUpdateLeverage(marketIndex, initialMarginFraction, marginMode, skipNonce, nonce, apiKeyIndex, accountIndex));
 
         public string CreateAuthToken(long deadline, int apiKeyIndex, long accountIndex)
@@ -443,7 +460,7 @@ namespace Lighter.Net.Utils
             return PtrToUtf8StringOrEmpty(r.str);
         }
 
-        public SignedTx SignUpdateMargin(int marketIndex, long usdcAmount, int direction, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
+        public SignedTx SignUpdateMargin(long marketIndex, long usdcAmount, int direction, byte skipNonce, long nonce, int apiKeyIndex, long accountIndex)
             => ParseSignedTx(_signUpdateMargin(marketIndex, usdcAmount, direction, skipNonce, nonce, apiKeyIndex, accountIndex));
 
         public SignedTx SignApproveIntegrator(
@@ -522,6 +539,11 @@ namespace Lighter.Net.Utils
                 rid = "osx-arm64";
                 fileName = "liblighter_signer.dylib";
             }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && RuntimeInformation.OSArchitecture == Architecture.X64)
+            {
+                rid = "osx-x64";
+                fileName = "liblighter_signer.dylib";
+            }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.X64)
             {
                 rid = "linux-x64";
@@ -537,11 +559,20 @@ namespace Lighter.Net.Utils
                 rid = "win-x64";
                 fileName = "lighter_signer.dll";
             }
+#if NET8_0_OR_GREATER
+            else if (RuntimeInformation.OSArchitecture == Architecture.Wasm)
+            {
+                rid = "wasm";
+                fileName = "liblighter_signer.wasm";
+
+                throw new PlatformNotSupportedException("Wasm is not supported yet.");
+            }
+#endif
             else
             {
                 throw new PlatformNotSupportedException(
                     $"Unsupported platform/architecture: {RuntimeInformation.OSDescription}/{RuntimeInformation.OSArchitecture}. " +
-                    "Supported: Linux(x64, arm64), macOS(arm64), Windows(x64).");
+                    "Supported: Linux(x64, arm64), macOS(x64, arm64), Windows(x64).");
             }
 
             var ridSpecificPath = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", fileName);

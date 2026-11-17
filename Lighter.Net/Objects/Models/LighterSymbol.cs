@@ -30,7 +30,7 @@ public record LighterSymbol
     /// ["<c>market_id</c>"] Market id
     /// </summary>
     [JsonPropertyName("market_id")]
-    public int MarketId { get; set; }
+    public long MarketId { get; set; }
     /// <summary>
     /// ["<c>market_type</c>"] Market type
     /// </summary>

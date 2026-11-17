@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0;net11.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
@@ -81,9 +81,19 @@
       <PackagePath>runtimes\osx-arm64\native\liblighter_signer.dylib</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="runtimes\win-x64\native\lighter_signer.dll" Condition="Exists('runtimes\win-x64\native\lighter_signer.dll')">
+    <None Include="runtimes\osx-x64\native\liblighter_signer.dylib" Condition="Exists('runtimes\osx-x64\native\liblighter_signer.dylib')">
+      <Pack>true</Pack>
+      <PackagePath>runtimes\osx-x64\native\liblighter_signer.dylib</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+	  <None Include="runtimes\win-x64\native\lighter_signer.dll" Condition="Exists('runtimes\win-x64\native\lighter_signer.dll')">
       <Pack>true</Pack>
       <PackagePath>runtimes\win-x64\native\lighter_signer.dll</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="runtimes\wasm\native\liblighter_signer.wasm" Condition="Exists('runtimes\wasm\native\liblighter_signer.wasm')">
+      <Pack>true</Pack>
+      <PackagePath>runtimes\wasm\native\liblighter_signer.wasm</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
