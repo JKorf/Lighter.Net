@@ -99,7 +99,15 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!symbolInfo.Success)
                 return QueryResult.Fail<LighterSocketTransactionResult>(_baseClient.Exchange, symbolInfo.Error!);
 
-            nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(1, ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return QueryResult.Fail<LighterSocketTransactionResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
+
             var imf = (int)(10_000 / leverage);
             var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignUpdateLeverage(
                 symbolInfo.Data.MarketId,
@@ -136,7 +144,14 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!symbolInfo.Success)
                 return QueryResult.Fail<LighterSocketTransactionResult>(_baseClient.Exchange, symbolInfo.Error!);
 
-            nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(1, ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return QueryResult.Fail<LighterSocketTransactionResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
 
             var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignUpdateMargin(
                 symbolInfo.Data.MarketId,

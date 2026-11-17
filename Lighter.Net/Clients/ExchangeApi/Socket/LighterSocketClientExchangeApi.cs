@@ -120,42 +120,23 @@ namespace Lighter.Net.Clients.ExchangeApi
             return CallResult.Ok(marketInfo);
         }
 
-        internal async Task<long> GetNoncesAsync(int count)
+        internal async Task<CallResult<long>> GetNoncesAsync(int count, CancellationToken ct)
         {
-            if (!LighterUtils.NonceSet(ApiCredentials!))
-            {
-                using var restClient = new LighterRestClient(opts =>
-                {
-                    opts.Environment = ClientOptions.Environment;
-                    opts.Proxy = ClientOptions.Proxy;
-                    opts.ApiCredentials = ApiCredentials;
-                });
+            return await LighterUtils.GetOrRetrieveNonceAsync(
+                ApiCredentials!,
+                async () => {
+                    using var restClient = new LighterRestClient(opts =>
+                    {
+                        opts.Environment = ClientOptions.Environment;
+                        opts.Proxy = ClientOptions.Proxy;
+                        opts.ApiCredentials = ApiCredentials;
+                    });
 
-                var nonceResult = await restClient.ExchangeApi.Account.GetNonceAsync().ConfigureAwait(false);
-                if (nonceResult.Success)
-                    LighterUtils.SetNonce(ApiCredentials!, nonceResult.Data.Nonce);
-            }
-
-            return LighterUtils.GetNonce(ApiCredentials!, count);
-        }
-
-        internal async Task<long> GetNonceAsync()
-        {
-            if (!LighterUtils.NonceSet(ApiCredentials!))
-            {
-                using var restClient = new LighterRestClient(opts =>
-                {
-                    opts.Environment = ClientOptions.Environment;
-                    opts.Proxy = ClientOptions.Proxy;
-                    opts.ApiCredentials = ApiCredentials;
-                });
-
-                var nonceResult = await restClient.ExchangeApi.Account.GetNonceAsync().ConfigureAwait(false);
-                if (nonceResult.Success)
-                    LighterUtils.SetNonce(ApiCredentials!, nonceResult.Data.Nonce);
-            }
-
-            return LighterUtils.GetNonce(ApiCredentials!);
+                    var nonceResult = await restClient.ExchangeApi.Account.GetNonceAsync(ct: ct).ConfigureAwait(false);
+                    return nonceResult.Success ? CallResult.Ok(nonceResult.Data.Nonce) : CallResult.Fail<long>(nonceResult.Error!);
+                },
+                count,
+                ct).ConfigureAwait(false);
         }
 
         internal async Task<WebSocketResult<UpdateSubscription>> SubscribeAsync<T>(

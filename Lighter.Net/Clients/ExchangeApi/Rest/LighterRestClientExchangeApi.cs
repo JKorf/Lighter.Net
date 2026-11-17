@@ -92,28 +92,16 @@ namespace Lighter.Net.Clients.ExchangeApi
             return HttpResult.Ok(result, result.Data.Timestamp);
         }
 
-        internal async Task<long> GetNoncesAsync(int count)
+        internal async Task<CallResult<long>> GetNoncesAsync(int count, CancellationToken ct)
         {
-            if (!LighterUtils.NonceSet(ApiCredentials!))
-            {
-                var nonceResult = await Account.GetNonceAsync().ConfigureAwait(false);
-                if (nonceResult.Success)
-                    LighterUtils.SetNonce(ApiCredentials!, nonceResult.Data.Nonce);
-            }
-
-            return LighterUtils.GetNonce(ApiCredentials!, count);
-        }
-
-        internal async Task<long> GetNonceAsync()
-        {
-            if (!LighterUtils.NonceSet(ApiCredentials!))
-            {
-                var nonceResult = await Account.GetNonceAsync().ConfigureAwait(false);
-                if (nonceResult.Success)
-                    LighterUtils.SetNonce(ApiCredentials!, nonceResult.Data.Nonce);
-            }
-
-            return LighterUtils.GetNonce(ApiCredentials!);
+            return await LighterUtils.GetOrRetrieveNonceAsync(
+                ApiCredentials!,
+                async () => {
+                    var nonceResult = await Account.GetNonceAsync(ct: ct).ConfigureAwait(false);
+                    return nonceResult.Success ? CallResult.Ok(nonceResult.Data.Nonce) : CallResult.Fail<long>(nonceResult.Error!);
+                },
+                count,
+                ct).ConfigureAwait(false);
         }
 
         /// <inheritdoc />

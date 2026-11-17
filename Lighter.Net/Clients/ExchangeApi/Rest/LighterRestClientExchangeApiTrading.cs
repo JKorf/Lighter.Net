@@ -54,7 +54,14 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!symbolInfo.Success)
                 return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, symbolInfo.Error!);
 
-            nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(1, ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
 
             var actPrice = (int)(price * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
             var actTriggerPrice = (int?)(triggerPrice * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
@@ -113,7 +120,14 @@ namespace Lighter.Net.Clients.ExchangeApi
 
             await LighterUtils.CheckBuilderFeeAsync(_baseClient._baseClient).ConfigureAwait(false);
 
-            nonce ??= await _baseClient.GetNoncesAsync(orders.Count()).ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(orders.Count(), ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return HttpResult.Fail<LighterTransactionsResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
 
             var txTypes = new List<int>();
             var txInfos = new List<string>();
@@ -195,7 +209,14 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!symbolInfo.Success)
                 return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, symbolInfo.Error!);
 
-            nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(1, ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
 
             var actPrice = (int)(price * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
             var actTriggerPrice = (int?)(triggerPrice * ((decimal)Math.Pow(10, symbolInfo.Data.SupportedPriceDecimals)));
@@ -250,7 +271,14 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!symbolInfo.Success)
                 return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, symbolInfo.Error!);
 
-            nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(1, ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
 
             var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignCancelOrder(
                 symbolInfo.Data.MarketId,
@@ -280,7 +308,14 @@ namespace Lighter.Net.Clients.ExchangeApi
             if (!_baseClient.Authenticated)
                 return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, new NoApiCredentialsError());
 
-            nonce ??= await _baseClient.GetNonceAsync().ConfigureAwait(false);
+            if (nonce == null)
+            {
+                var nonceResult = await _baseClient.GetNoncesAsync(1, ct).ConfigureAwait(false);
+                if (!nonceResult.Success)
+                    return HttpResult.Fail<LighterTransactionResult>(_baseClient.Exchange, nonceResult.Error!);
+
+                nonce = nonceResult.Data;
+            }
 
             var signedTx = LighterUtils.GetSigner(_baseClient.ClientOptions.LibraryPath, _baseClient.BaseAddress, _baseClient.ApiCredentials!).SignCancelAllOrders(
                 (int)timeInForce,

@@ -29,7 +29,13 @@ namespace Lighter.Net
             public bool Done { get; set; }
         }
 
-        private static ConcurrentDictionary<string, long> _nonceDictionary = new ConcurrentDictionary<string, long>();
+        class AccountNonce
+        {
+            public SemaphoreSlim Semaphore { get; set; } = default!;
+            public long Nonce { get; set; }
+        }
+
+        private static ConcurrentDictionary<string, AccountNonce> _nonceDictionary = new ConcurrentDictionary<string, AccountNonce>();
         private static ConcurrentDictionary<string, CachedAuthToken> _authTokenDictionary = new ConcurrentDictionary<string, CachedAuthToken>();
         private static ConcurrentDictionary<string, LighterSigner> _clientDictionary = new ConcurrentDictionary<string, LighterSigner>();
         private static ConcurrentDictionary<string, LighterSymbol[]> _symbolDictionary = new ConcurrentDictionary<string, LighterSymbol[]>();
@@ -38,27 +44,38 @@ namespace Lighter.Net
 
         internal static int UsdcMultiplier => 1000000;
 
-        public static bool NonceSet(LighterCredentials credentials)
+        public static async Task<CallResult<long>> GetOrRetrieveNonceAsync(LighterCredentials credentials, Func<Task<CallResult<long>>> retrieveNonce, int count, CancellationToken ct)
         {
             var key = $"{credentials.Credential.AccountIndex}:{credentials.Credential.ApiKeyIndex}";
-            return _nonceDictionary.ContainsKey(key);
-        }
+            var accountNonce = _nonceDictionary.GetOrAdd(key, (key) => new AccountNonce { Semaphore = new SemaphoreSlim(1, 1), Nonce = -1 });
+            try
+            {
+                await accountNonce.Semaphore.WaitAsync(ct).ConfigureAwait(false); 
+            } 
+            catch(OperationCanceledException)
+            {
+                return CallResult<long>.Fail(new CancellationRequestedError());
+            }
 
-        public static long GetNonce(LighterCredentials credentials, int count = 1)
-        {
-            var key = $"{credentials.Credential.AccountIndex}:{credentials.Credential.ApiKeyIndex}";
-            if (!_nonceDictionary.TryGetValue(key, out long nonce))
-                _nonceDictionary[key] = 0;
+            try
+            {
+                if (accountNonce.Nonce == -1)
+                {
+                    var retrievalResult = await retrieveNonce().ConfigureAwait(false);
+                    if (!retrievalResult.Success)
+                        return retrievalResult;
 
-            var newNonce = nonce + count;
-            _nonceDictionary[key] = newNonce;
-            return nonce;
-        }
+                    accountNonce.Nonce = retrievalResult.Data;
+                }
 
-        public static void SetNonce(LighterCredentials credentials, long nonce) 
-        {
-            var key = $"{credentials.Credential.AccountIndex}:{credentials.Credential.ApiKeyIndex}";
-            _nonceDictionary[key] = nonce;
+                var result = accountNonce.Nonce;
+                accountNonce.Nonce += count;
+                return CallResult.Ok(result);
+            }
+            finally
+            {
+                accountNonce.Semaphore.Release();
+            }
         }
 
         public static LighterSigner GetSigner(string? libPath, string url, LighterCredentials credentials)
@@ -180,9 +197,20 @@ namespace Lighter.Net
                 // Set to true even if the check fails to avoid continuously trying to check and approve the builder fee if there's an issue
                 status.Done = true;
 
-                var approvedResult = await client.ExchangeApi.Account.GetAccountsAsync().ConfigureAwait(false);
+                var accountLimitsTask = client.ExchangeApi.Account.GetAccountLimitsAsync();
+                var approvedTask = client.ExchangeApi.Account.GetAccountsAsync();
+                await Task.WhenAll(accountLimitsTask, approvedTask).ConfigureAwait(false);
+                var accountLimits = accountLimitsTask.Result;
+                var approvedResult = approvedTask.Result;
                 if (!approvedResult.Success)
                     return approvedResult;
+
+                if (!accountLimits.Success)
+                    return accountLimits;
+
+                if (accountLimits.Data.UserTier == "std")
+                    // Standard tier accounts are not allowed to use integrator fee
+                    return CallResult.Ok();
 
                 var account = approvedResult.Data.Accounts.SingleOrDefault(x => x.AccountIndex == client.ExchangeApi.ApiCredentials.Credential.AccountIndex);
                 if (account == null)
