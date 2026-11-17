@@ -51,8 +51,8 @@ namespace Lighter.Net
             var restClient = _serviceProvider?.GetRequiredService<ILighterRestClient>() ?? new LighterRestClient();
             var socketClient = _serviceProvider?.GetRequiredService<ILighterSocketClient>() ?? new LighterSocketClient();
 
-            var sharedRestClient = restClient.ExchangeApi.SharedClient;
-            var sharedSocketClient = socketClient.ExchangeApi.SharedClient;
+            var sharedRestClient = restClient.ExchangeApi.SharedApi;
+            var sharedSocketClient = socketClient.ExchangeApi.SharedApi;
             return new KlineTracker(
                 _serviceProvider?.GetRequiredService<ILoggerFactory>().CreateLogger(restClient.Exchange),
                 sharedRestClient,
@@ -70,8 +70,8 @@ namespace Lighter.Net
             var restClient = _serviceProvider?.GetRequiredService<ILighterRestClient>() ?? new LighterRestClient();
             var socketClient = _serviceProvider?.GetRequiredService<ILighterSocketClient>() ?? new LighterSocketClient();
 
-            var sharedRestClient = restClient.ExchangeApi.SharedClient;
-            var sharedSocketClient = socketClient.ExchangeApi.SharedClient;
+            var sharedRestClient = restClient.ExchangeApi.SharedApi;
+            var sharedSocketClient = socketClient.ExchangeApi.SharedApi;
             return new TradeTracker(
                 _serviceProvider?.GetRequiredService<ILoggerFactory>().CreateLogger(restClient.Exchange),
                 sharedRestClient,
