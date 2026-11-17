@@ -229,6 +229,18 @@ Make a one time donation in a crypto currency of your choice. If you prefer to d
 Alternatively, sponsor me on Github using [Github Sponsors](https://github.com/sponsors/JKorf). 
 
 ## Release notes
+* Version 1.9.0 - 17 Nov 2026
+    * Updated CryptoExchange.Net to v13.3.0
+    * Updated signing binaries from v1.0.6 to v1.0.12
+    * Added support for OSX-x64
+    * Added stpMode and stpEquality parameters to order endpoints
+    * Added orderVersion parameter to EditOrderAsync
+    * Added optional symbol parameter to CancelAllOrdersAsync
+    * Improved nonce tracking
+    * Updated integrator logic to check account tier
+    * Updated SymbolId type from int to long
+    * Fixed swapped output GenerateApiKey
+
 * Version 1.8.0 - 04 Nov 2026
     * Updated CryptoExchange.Net to 13.2.3
     * Added CryptoExchange.Net.Web3 13.0.0 reference
