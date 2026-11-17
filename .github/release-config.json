@@ -1,0 +1,18 @@
+{
+  "baseBranch": "main",
+  "sdk": "11.0.100",
+  "packages": [
+    {
+      "key": "lighter",
+      "project": "Lighter.Net/Lighter.Net.csproj",
+      "testProjects": [
+        "Lighter.Net.UnitTests/Lighter.Net.UnitTests.csproj"
+      ],
+      "packageId": "JKorf.Lighter.Net",
+      "readme": "README.md",
+      "tagPrefix": "Lighter.Net.",
+      "releaseIntegrationTests": false,
+      "publishToGitHubPackages": true
+    }
+  ]
+}
